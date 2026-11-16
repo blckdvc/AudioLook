@@ -2,11 +2,16 @@
 
 All notable changes to **AudioLook**.
 
-## 1.2.3 — 2026-11-16
+## 1.3.0 — 2026-11-16
+- **Automatic updates** — AudioLook checks GitHub for a new release at launch and then once a
+  day. When one is available it shows the release notes and offers **Install and Relaunch**,
+  **Later** or **Skip This Version**. The new version is downloaded, verified (SHA-256 when
+  published, same app, newer version, intact signature), installed in place and relaunched.
+- Menu-bar entries **Check for Updates…** and **Check Automatically** (on by default).
 - **Renamed audiolook → AudioLook**, in the app, the disk image and the repository.
 - **New bundle identifier**, `com.blckdvc.AudioLook`. macOS treats it as a new app: the window
   goes back to its default place once, and the permission to read the Finder selection is
-  asked again.
+  asked again. Earlier versions do not update themselves: install this one once from the DMG.
 - **Fix** — opening a file through a symbolic link now selects that file instead of the first
   one in its folder.
 - A silent **demo mode** (`-demoData YES`) for screenshots, and `NOINSTALL=1 ./build.sh` to

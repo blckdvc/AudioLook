@@ -5,12 +5,16 @@ import Foundation
 /// du Finder. Aucun fichier de l'utilisateur n'est lu ; rien n'est joué tant qu'on n'appuie
 /// pas sur lecture.
 ///   -demoStage midi          ouvre le fichier MIDI plutôt que la boucle audio
+///   -demoStage update        montre la fenêtre de mise à jour (vérification réelle, sans installation)
 ///   -demoLoopA 0.25 -demoLoopB 0.5   pose la région de boucle A/B (fractions de la durée)
 ///   -demoTargetBPM 140       règle le tempo cible
 ///   -demoTranspose 3         transpose de n demi-tons
 enum DemoData {
     static var isEnabled: Bool { UserDefaults.standard.bool(forKey: "demoData") }
     static var wantsMidi: Bool { UserDefaults.standard.string(forKey: "demoStage") == "midi" }
+    /// `-demoStage update` : interroge réellement GitHub pour montrer la fenêtre de mise à jour,
+    /// sans jamais rien télécharger ni installer.
+    static var wantsUpdateCheck: Bool { UserDefaults.standard.string(forKey: "demoStage") == "update" }
 
     static func number(_ key: String) -> Double? {
         UserDefaults.standard.object(forKey: key) == nil ? nil : UserDefaults.standard.double(forKey: key)

@@ -65,6 +65,27 @@ right-click **AudioLook › Open › Open** (macOS 13/14), or System Settings �
 AudioLook lives in the **menu bar** (no Dock icon): select an audio file in the Finder and it
 opens on its own.
 
+## Updates
+
+From version 1.3.0, AudioLook updates itself: it checks the
+[GitHub releases](https://github.com/blckdvc/AudioLook/releases) at launch and once a day, and
+offers to install a new version (downloaded, verified, installed in place, relaunched).
+Use **Check for Updates…** in the menu-bar menu to check now, or untick **Check Automatically**
+to turn it off. Versions before 1.3.0 need to be updated once by hand from the DMG.
+
+![AudioLook — a new version is available, with its release notes](docs/screenshot-update.png)
+
+For the update to install, AudioLook must be in a folder it can write to (e.g. **Applications**),
+not launched straight from the DMG.
+
+The download is checked against the SHA-256 published with the release, and the app inside
+must be AudioLook, newer, with an intact signature. The app is ad hoc signed, not notarized:
+that check proves the download is the one published on GitHub, not who built it.
+
+**Publishing a release** (maintainer): bump the version in `build.sh`, add a section to
+`CHANGELOG.md`, then run `./release.command` — it builds, makes the DMG and its SHA-256,
+commits the DMG, pushes and creates the GitHub release that the app looks for.
+
 ## Export to a DAW
 
 - **Drag the waveform**: just drag the waveform itself into your DAW's arrangement and drop it
@@ -95,7 +116,7 @@ To build the DMG: `./makedmg.command` (produces `AudioLook.dmg`).
 
 `NOINSTALL=1 ./build.sh` builds and signs the app without installing or launching it.
 
-Launched with `-demoData YES`, the app opens synthesized loops instead of following the Finder selection, and stays silent: this is how the screenshots above are made. `-demoStage midi` opens the MIDI file, `-demoLoopA 0.25 -demoLoopB 0.5` sets the A/B region, `-demoTargetBPM 140` the target tempo and `-demoTranspose 3` the transposition.
+Launched with `-demoData YES`, the app opens synthesized loops instead of following the Finder selection, and stays silent: this is how the screenshots above are made. `-demoStage midi` opens the MIDI file, `-demoStage update` shows the update window without installing anything, `-demoLoopA 0.25 -demoLoopB 0.5` sets the A/B region, `-demoTargetBPM 140` the target tempo and `-demoTranspose 3` the transposition.
 
 ## Architecture
 
