@@ -63,7 +63,8 @@ final class LoopPlayer: PlaybackEngine {
             engine.disconnectNodeOutput(node)
             engine.connect(node, to: engine.mainMixerNode, format: fmt)
         }
-        engine.mainMixerNode.outputVolume = 1   // sécurité : jamais muet
+        // sécurité : jamais muet — sauf en démonstration, où les captures se font en silence
+        engine.mainMixerNode.outputVolume = DemoData.isEnabled ? 0 : 1
         engine.prepare()
         play()
     }

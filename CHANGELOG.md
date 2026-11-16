@@ -73,4 +73,4 @@ All notable changes to **audiolook**.
 ## Support the project
 Free and open-source 🙂 — if you feel like it, buy me a few tokens:
 
-[![Buy me tokens](https://raw.githubusercontent.com/blckdvc/audiolook/main/docs/buy-me-tokens.png)](https://paypal.me/lbenh)
+[![Buy me tokens](https://raw.githubusercontent.com/blckdvc/AudioLook/main/docs/buy-me-tokens.png)](https://paypal.me/lbenh)

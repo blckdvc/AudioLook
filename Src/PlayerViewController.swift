@@ -197,7 +197,9 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
         siblings = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil))?
             .filter { exts.contains($0.pathExtension.lowercased()) }
             .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending } ?? [url]
-        index = siblings.firstIndex(of: url) ?? 0
+        // compare les chemins résolus : /var et /private/var désignent le même fichier
+        let wanted = url.resolvingSymlinksInPath().path
+        index = siblings.firstIndex { $0.resolvingSymlinksInPath().path == wanted } ?? 0
         load(siblings[index])
     }
 
@@ -210,6 +212,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
         isMidi = (ext == "mid" || ext == "midi")
         titleLabel.stringValue = Lang.t("Loading…", "Chargement…"); infoLabel.stringValue = ""
         if isMidi { loadMidi(url) } else { loadAudio(url) }
+        applyDemoSettings()
     }
 
     private func loadAudio(_ url: URL) {
@@ -262,6 +265,27 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
         titleLabel.stringValue = url.lastPathComponent
         infoLabel.stringValue = describeMidi(url, notes: midi.rawNotes.count)
         updateGrid(); startTimer(); refresh()
+    }
+
+    /// Mode démonstration : règle la boucle, le tempo et la transposition demandés au lancement.
+    private func applyDemoSettings() {
+        guard DemoData.isEnabled else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+            guard let self else { return }
+            if let a = DemoData.number("demoLoopA"), let b = DemoData.number("demoLoopB") {
+                self.loopButton.state = .on
+                self.active.setLoop(true)
+                self.active.setLoopRegion(a: a, b: b)
+                self.waveform.loopA = a; self.waveform.loopB = b
+            }
+            if let bpm = DemoData.number("demoTargetBPM") {
+                self.targetBPM = bpm; self.tgtSlider.doubleValue = bpm; self.applyTempo()
+            }
+            if let semis = DemoData.number("demoTranspose") {
+                self.pitchSlider.doubleValue = semis; self.pitchChanged()
+            }
+            self.refresh()
+        }
     }
 
     private func navigate(_ d: Int) { guard !siblings.isEmpty else { return }; index = (index + d + siblings.count) % siblings.count; load(siblings[index]) }

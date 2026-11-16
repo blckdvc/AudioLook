@@ -301,6 +301,8 @@ final class MidiPlayer: PlaybackEngine {
     // MARK: Transport
 
     func play(fromGlobal g: Double? = nil) {
+        // En démonstration, rien ne doit sortir des haut-parleurs.
+        if DemoData.isEnabled { return }
         guard let p = player, duration > 0 else { return }
         let start = min(max(g ?? pausedGlobal, loopA), loopB)
         p.currentPosition = start * duration

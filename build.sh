@@ -86,6 +86,9 @@ xattr -cr "$APP" || true
 codesign --force --deep --sign - --entitlements "$OUT/app.entitlements" "$APP"
 codesign --verify --deep --strict "$APP" && echo "signature OK"
 
+# NOINSTALL=1 ./build.sh : compile et signe sans installer ni lancer (captures d'écran, essais).
+if [ -n "${NOINSTALL:-}" ]; then echo "✓ Build : $APP"; exit 0; fi
+
 DEST="$HOME/Applications/audiolook.app"
 mkdir -p "$HOME/Applications"
 # ferme les instances éventuelles (ancien nom LoopLook inclus) et retire l'ancien bundle renommé

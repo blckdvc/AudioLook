@@ -40,6 +40,20 @@ Free and open-source 🙂 — if you feel like it, buy me a few tokens:
 - Settings **kept from one file to the next** (volume / pitch / bypass). The tempo resets to
   each sample's own detected BPM.
 
+### In pictures
+
+![audiolook — a loop with its waveform and playhead](docs/screenshot-waveform.png)
+
+![audiolook — an A/B region dragged over one bar of the loop](docs/screenshot-loop.png)
+
+![audiolook — the same loop matched to 140 BPM and transposed by three semitones](docs/screenshot-tempo.png)
+
+![audiolook — a MIDI file shown as a piano-roll, with its keyboard gutter](docs/screenshot-midi.png)
+
+![audiolook — an A/B region on the piano-roll](docs/screenshot-midi-loop.png)
+
+![audiolook — the interface in French, following the system language](docs/screenshot-french.png)
+
 ## Install (DMG)
 
 Download [`audiolook.dmg`](audiolook.dmg), open it and drag **audiolook** into **Applications**.
@@ -76,6 +90,12 @@ ad-hoc signs it and installs it to `~/Applications/audiolook.app`.
 `DEVELOPER_DIR` is forced to the Command Line Tools (avoids the Xcode license).
 
 To build the DMG: `./makedmg.command` (produces `audiolook.dmg`).
+
+### Demo mode
+
+`NOINSTALL=1 ./build.sh` builds and signs the app without installing or launching it.
+
+Launched with `-demoData YES`, the app opens synthesized loops instead of following the Finder selection, and stays silent: this is how the screenshots above are made. `-demoStage midi` opens the MIDI file, `-demoLoopA 0.25 -demoLoopB 0.5` sets the A/B region, `-demoTargetBPM 140` the target tempo and `-demoTranspose 3` the transposition.
 
 ## Architecture
 

@@ -16,6 +16,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ note: Notification) {
         setupStatusItem()
+        // Captures d'écran du README : boucles synthétisées, sans lire la sélection du Finder.
+        if DemoData.isEnabled {
+            followSelection = false
+            open(url: DemoData.prepare(), follow: false)
+            return
+        }
         registerHotKey()
         startPolling()
     }
@@ -74,6 +80,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: Ouverture
 
     @objc func openFinderSelection() {
+        if DemoData.isEnabled { return }
         guard let path = finderSelectionPOSIXPath(), !path.isEmpty else { NSSound.beep(); return }
         open(url: URL(fileURLWithPath: path), follow: false)
     }
