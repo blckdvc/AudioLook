@@ -163,6 +163,8 @@ final class Updater {
     // MARK: Proposition
 
     private func offer(_ rel: Release) {
+        // Essai de bout en bout sur une copie de test : on installe sans poser la question.
+        if DemoData.isEnabled && DemoData.allowsInstall { download(rel); return }
         NSApp.activate(ignoringOtherApps: true)
         let a = NSAlert()
         a.messageText = Lang.t("AudioLook \(rel.version) is available", "AudioLook \(rel.version) est disponible")
@@ -208,7 +210,7 @@ final class Updater {
     }
 
     private func download(_ rel: Release) {
-        if DemoData.isEnabled { return }
+        if DemoData.isEnabled && !DemoData.allowsInstall { return }
         guard canReplaceInPlace() else { manualFallback(rel); return }
         busy = true
         showProgress(Lang.t("Downloading AudioLook \(rel.version)…", "Téléchargement d'AudioLook \(rel.version)…"))

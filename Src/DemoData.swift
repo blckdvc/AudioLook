@@ -15,6 +15,9 @@ enum DemoData {
     /// `-demoStage update` : interroge réellement GitHub pour montrer la fenêtre de mise à jour,
     /// sans jamais rien télécharger ni installer.
     static var wantsUpdateCheck: Bool { UserDefaults.standard.string(forKey: "demoStage") == "update" }
+    /// `-demoAllowInstall YES`, avec `-demoStage update` : installe réellement la mise à jour trouvée,
+    /// sans demander. Sert à prouver le mécanisme de bout en bout sur une copie de test.
+    static var allowsInstall: Bool { UserDefaults.standard.bool(forKey: "demoAllowInstall") }
 
     static func number(_ key: String) -> Double? {
         UserDefaults.standard.object(forKey: key) == nil ? nil : UserDefaults.standard.double(forKey: key)

@@ -116,7 +116,7 @@ To build the DMG: `./makedmg.command` (produces `AudioLook.dmg`).
 
 `NOINSTALL=1 ./build.sh` builds and signs the app without installing or launching it.
 
-Launched with `-demoData YES`, the app opens synthesized loops instead of following the Finder selection, and stays silent: this is how the screenshots above are made. `-demoStage midi` opens the MIDI file, `-demoStage update` shows the update window without installing anything, `-demoLoopA 0.25 -demoLoopB 0.5` sets the A/B region, `-demoTargetBPM 140` the target tempo and `-demoTranspose 3` the transposition.
+Launched with `-demoData YES`, the app opens synthesized loops instead of following the Finder selection, and stays silent: this is how the screenshots above are made. `-demoStage midi` opens the MIDI file, `-demoStage update` shows the update window without installing anything (add `-demoAllowInstall YES` on a test copy to run the whole update unattended), `-demoLoopA 0.25 -demoLoopB 0.5` sets the A/B region, `-demoTargetBPM 140` the target tempo and `-demoTranspose 3` the transposition.
 
 ## Architecture
 
