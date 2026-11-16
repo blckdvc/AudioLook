@@ -1,4 +1,4 @@
-# audiolook
+# AudioLook
 
 A macOS **audio loop** player in a floating / menu-bar window, with **high-quality**
 time-stretch and transposition (Signalsmith Stretch engine, offline rendering).
@@ -7,8 +7,8 @@ Made to audition and prepare samples before dragging them into a DAW.
 The interface follows the system language (English, or French on a French macOS).
 See the [changelog](CHANGELOG.md) for what's new.
 
-![audiolook — main window](docs/screenshot-main.jpg)
-![audiolook — A/B loop region](docs/screenshot-loop-ab.jpg)
+![AudioLook — main window](docs/screenshot-main.jpg)
+![AudioLook — A/B loop region](docs/screenshot-loop-ab.jpg)
 
 ### Support the project
 Free and open-source 🙂 — if you feel like it, buy me a few tokens:
@@ -42,27 +42,27 @@ Free and open-source 🙂 — if you feel like it, buy me a few tokens:
 
 ### In pictures
 
-![audiolook — a loop with its waveform and playhead](docs/screenshot-waveform.png)
+![AudioLook — a loop with its waveform and playhead](docs/screenshot-waveform.png)
 
-![audiolook — an A/B region dragged over one bar of the loop](docs/screenshot-loop.png)
+![AudioLook — an A/B region dragged over one bar of the loop](docs/screenshot-loop.png)
 
-![audiolook — the same loop matched to 140 BPM and transposed by three semitones](docs/screenshot-tempo.png)
+![AudioLook — the same loop matched to 140 BPM and transposed by three semitones](docs/screenshot-tempo.png)
 
-![audiolook — a MIDI file shown as a piano-roll, with its keyboard gutter](docs/screenshot-midi.png)
+![AudioLook — a MIDI file shown as a piano-roll, with its keyboard gutter](docs/screenshot-midi.png)
 
-![audiolook — an A/B region on the piano-roll](docs/screenshot-midi-loop.png)
+![AudioLook — an A/B region on the piano-roll](docs/screenshot-midi-loop.png)
 
-![audiolook — the interface in French, following the system language](docs/screenshot-french.png)
+![AudioLook — the interface in French, following the system language](docs/screenshot-french.png)
 
 ## Install (DMG)
 
-Download [`audiolook.dmg`](audiolook.dmg), open it and drag **audiolook** into **Applications**.
+Download [`AudioLook.dmg`](AudioLook.dmg), open it and drag **AudioLook** into **Applications**.
 
 The app is **ad-hoc signed** (no paid Apple Developer account), so on **first launch**:
-right-click **audiolook › Open › Open** (macOS 13/14), or System Settings › Privacy & Security ›
+right-click **AudioLook › Open › Open** (macOS 13/14), or System Settings › Privacy & Security ›
 **“Open Anyway”** (macOS 15). A short “Read me” is included in the DMG.
 
-audiolook lives in the **menu bar** (no Dock icon): select an audio file in the Finder and it
+AudioLook lives in the **menu bar** (no Dock icon): select an audio file in the Finder and it
 opens on its own.
 
 ## Export to a DAW
@@ -86,10 +86,10 @@ The **Command Line Tools** are enough:
 ```
 
 The script compiles the C++ bridge (Signalsmith) with `clang++`, then the app with `swiftc`,
-ad-hoc signs it and installs it to `~/Applications/audiolook.app`.
+ad-hoc signs it and installs it to `~/Applications/AudioLook.app`.
 `DEVELOPER_DIR` is forced to the Command Line Tools (avoids the Xcode license).
 
-To build the DMG: `./makedmg.command` (produces `audiolook.dmg`).
+To build the DMG: `./makedmg.command` (produces `AudioLook.dmg`).
 
 ### Demo mode
 

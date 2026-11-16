@@ -373,7 +373,7 @@ final class MidiPlayer: PlaybackEngine {
         guard let data = MidiFile.transformedData(base: baseData, semitones: semis, region: region,
                                                   totalBeats: totalBeats, tempoBPM: tempo) else { return nil }
         let safe = name.replacingOccurrences(of: "/", with: "-")
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("audiolook", isDirectory: true)
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("AudioLook", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let url = dir.appendingPathComponent(safe).appendingPathExtension("mid")
         try? FileManager.default.removeItem(at: url)

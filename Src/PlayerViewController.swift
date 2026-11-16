@@ -363,7 +363,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Espace = lecture/pause tant que la fenêtre audiolook est active
+        // Espace = lecture/pause tant que la fenêtre AudioLook est active
         // (on laisse passer l'espace quand on édite un champ texte).
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] e in
             guard let self, self.view.window?.isKeyWindow == true else { return e }

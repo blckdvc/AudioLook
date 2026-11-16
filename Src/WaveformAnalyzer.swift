@@ -6,7 +6,7 @@ import AVFoundation
 final class WaveformAnalyzer {
     struct Result { var maxv: [Float]; var minv: [Float]; var rms: [Float] }
     private var cancelled = false
-    private let queue = DispatchQueue(label: "audiolook.waveform", qos: .userInitiated)
+    private let queue = DispatchQueue(label: "AudioLook.waveform", qos: .userInitiated)
 
     func cancel() { cancelled = true }
 

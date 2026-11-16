@@ -30,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.image = NSImage(systemSymbolName: "waveform.circle.fill", accessibilityDescription: "audiolook")
+        item.button?.image = NSImage(systemSymbolName: "waveform.circle.fill", accessibilityDescription: "AudioLook")
         let menu = NSMenu()
         menu.addItem(withTitle: Lang.t("Open Finder selection", "Ouvrir la sélection du Finder"), action: #selector(openFinderSelection), keyEquivalent: "")
         let follow = NSMenuItem(title: Lang.t("Follow Finder selection", "Suivre la sélection du Finder"), action: #selector(toggleFollow), keyEquivalent: "")
@@ -54,7 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func about() {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
         let a = NSAlert()
-        a.messageText = "audiolook \(v)"
+        a.messageText = "AudioLook \(v)"
         a.informativeText = Lang.t(
             "Loop player: waveform, A/B loop, tempo (BPM), transposition and magnetic grid (Signalsmith engine).\n\nSelect an audio file in the Finder to load it automatically.\n\nby blckdvc\n\nFree & open-source — if you feel like it, buy me a few tokens:",
             "Lecteur de boucles : forme d'onde, boucle A/B, tempo (BPM), transposition et grille magnétique (moteur Signalsmith).\n\nSélectionne un fichier audio dans le Finder pour le charger automatiquement.\n\npar blckdvc\n\nLibre et open-source — si le cœur t'en dit, offre-moi quelques tokens :")
@@ -94,14 +94,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             w.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
             w.titleVisibility = .hidden                 // barre de titre masquée
             w.titlebarAppearsTransparent = true
-            w.title = "audiolook"
+            w.title = "AudioLook"
             w.isMovableByWindowBackground = true        // on déplace par le fond (la forme d'onde ne bouge pas la fenêtre)
             w.setContentSize(NSSize(width: 600, height: 470))   // taille par défaut (disposition 2 colonnes)
             w.contentMinSize = NSSize(width: 560, height: 380)
             w.center()
             // Mémorise taille + position d'un lancement à l'autre et restaure le dernier cadre.
-            if !w.setFrameUsingName("audiolookMain") { w.center() }
-            w.setFrameAutosaveName("audiolookMain")
+            if !w.setFrameUsingName("AudioLookMain") { w.center() }
+            w.setFrameAutosaveName("AudioLookMain")
             // Si le cadre restauré est hors des écrans connectés (ex. ancien 2e écran débranché),
             // on recentre pour ne pas ouvrir la fenêtre hors de vue.
             let visible = NSScreen.screens.contains { scr in
@@ -145,7 +145,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let path = finderSelectionPOSIXPath() ?? ""
         let isAudio = !path.isEmpty && audioExts.contains((path as NSString).pathExtension.lowercased())
         if isAudio {
-            // recharge sur un nouveau fichier audio ; ne pas recharger pendant qu'on agit dans audiolook
+            // recharge sur un nouveau fichier audio ; ne pas recharger pendant qu'on agit dans AudioLook
             if path != lastLoadedPath && !NSApp.isActive { open(url: URL(fileURLWithPath: path), follow: true) }
         } else {
             // sélection quittée (vide / dossier / non-audio) → stop + masque, comme Quick Look

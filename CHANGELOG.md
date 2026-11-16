@@ -1,6 +1,16 @@
 # Changelog
 
-All notable changes to **audiolook**.
+All notable changes to **AudioLook**.
+
+## 1.2.3 — 2026-11-16
+- **Renamed audiolook → AudioLook**, in the app, the disk image and the repository.
+- **New bundle identifier**, `com.blckdvc.AudioLook`. macOS treats it as a new app: the window
+  goes back to its default place once, and the permission to read the Finder selection is
+  asked again.
+- **Fix** — opening a file through a symbolic link now selects that file instead of the first
+  one in its folder.
+- A silent **demo mode** (`-demoData YES`) for screenshots, and `NOINSTALL=1 ./build.sh` to
+  build without installing.
 
 ## 1.2.2 — 2026-10-27
 - **Piano keyboard in the piano-roll** — a vertical keyboard on the left (black / white keys)

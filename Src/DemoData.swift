@@ -18,7 +18,7 @@ enum DemoData {
 
     /// Écrit les fichiers de démonstration dans un dossier temporaire et rend celui à ouvrir.
     static func prepare() -> URL {
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("audiolook-demo")
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("AudioLook-demo")
         try? FileManager.default.removeItem(at: dir)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let drums = dir.appendingPathComponent("Wrenfield Drums 120.wav")
