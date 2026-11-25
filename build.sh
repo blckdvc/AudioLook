@@ -19,7 +19,7 @@ clang++ -std=c++17 -O2 -fvisibility=hidden -isysroot "$SDK" -target "$TARGET" \
 
 echo "→ swiftc $(swiftc --version 2>&1 | head -1)"
 swiftc -O -sdk "$SDK" -target "$TARGET" -module-name AudioLook \
-  -framework Cocoa -framework AVFoundation -framework Carbon \
+  -framework Cocoa -framework AVFoundation -framework Carbon -framework CoreMIDI \
   -import-objc-header Src/Bridging.h -Xcc -I"$PWD/Src" \
   Src/*.swift "$OUT/StretchBridge.o" -lc++ \
   -o "$APP/Contents/MacOS/AudioLook"
@@ -37,8 +37,8 @@ cat > "$APP/Contents/Info.plist" <<'PL'
   <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
   <key>CFBundleName</key><string>AudioLook</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>1.3.0</string>
-  <key>CFBundleVersion</key><string>19</string>
+  <key>CFBundleShortVersionString</key><string>1.4.0</string>
+  <key>CFBundleVersion</key><string>20</string>
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>LSApplicationCategoryType</key><string>public.app-category.music</string>
   <key>LSUIElement</key><true/>

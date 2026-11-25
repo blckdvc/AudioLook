@@ -34,6 +34,15 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
 
     private let bypassToggle = NSButton(checkboxWithTitle: Lang.t("Bypass processing (pitch / tempo)", "Désactiver le traitement (pitch / tempo)"), target: nil, action: nil)
 
+    // Clavier MIDI → sampler (mode varispeed : la note de base joue l'échantillon tel quel)
+    private let midiToggle = NSButton(checkboxWithTitle: Lang.t("MIDI keyboard", "Clavier MIDI"), target: nil, action: nil)
+    private let rootPopup = NSPopUpButton()
+    private let midiModePopup = NSPopUpButton()
+    private let midiStatus = NSTextField(labelWithString: "")
+    private let midiIn = MidiInput()
+    private var midiNoteClear: DispatchWorkItem?
+    private let midiEnabledKey = "midiInEnabled", midiRootKey = "midiRootNote", midiLoopKey = "midiLoopMode"
+
     private let player = LoopPlayer()
     private let midi = MidiPlayer()
     private var isMidi = false
@@ -51,7 +60,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
     private func sym(_ n: String) -> NSImage { NSImage(systemSymbolName: n, accessibilityDescription: nil) ?? NSImage(size: NSSize(width: 1, height: 1)) }
 
     override func loadView() {
-        let root = NSView(frame: NSRect(x: 0, y: 0, width: 600, height: 470)); root.wantsLayer = true
+        let root = NSView(frame: NSRect(x: 0, y: 0, width: 600, height: 500)); root.wantsLayer = true
         titleLabel.font = .systemFont(ofSize: 15, weight: .semibold); titleLabel.lineBreakMode = .byTruncatingMiddle
         infoLabel.font = .monospacedDigitSystemFont(ofSize: 11, weight: .regular); infoLabel.textColor = .secondaryLabelColor
         timeLabel.font = .monospacedDigitSystemFont(ofSize: 12, weight: .medium); timeLabel.textColor = .secondaryLabelColor
@@ -120,6 +129,28 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
         let columns = hstack([leftGrid, NSView(), rightGrid], 12)
         columns.alignment = .top
 
+        // Ligne MIDI : activer · note de base · mode (une fois / boucle A/B) · dernière note reçue
+        let d = UserDefaults.standard
+        midiToggle.state = (d.object(forKey: midiEnabledKey) as? Bool ?? true) ? .on : .off
+        midiToggle.target = self; midiToggle.action = #selector(midiToggleChanged); midiToggle.font = .systemFont(ofSize: 11)
+        midiToggle.toolTip = Lang.t("Play the A/B region from a MIDI keyboard, or from a DAW track sent to the “AudioLook” MIDI port",
+                                    "Jouer la région A/B au clavier MIDI, ou depuis une piste de DAW envoyée vers le port MIDI « AudioLook »")
+        rootPopup.addItems(withTitles: (0...127).map { Self.noteName($0) })
+        rootPopup.selectItem(at: d.object(forKey: midiRootKey) as? Int ?? 60)
+        rootPopup.controlSize = .small; rootPopup.font = .systemFont(ofSize: 11)
+        rootPopup.target = self; rootPopup.action = #selector(midiSettingsChanged)
+        rootPopup.toolTip = Lang.t("Root note: plays the sample as you hear it (current pitch and tempo)",
+                                   "Note de base : joue l'échantillon tel que vous l'entendez (pitch et tempo actuels)")
+        midiModePopup.addItems(withTitles: [Lang.t("Play once", "Jouer une fois"), Lang.t("Loop A/B while held", "Boucler A/B tant que tenu")])
+        midiModePopup.selectItem(at: d.bool(forKey: midiLoopKey) ? 1 : 0)
+        midiModePopup.controlSize = .small; midiModePopup.font = .systemFont(ofSize: 11)
+        midiModePopup.target = self; midiModePopup.action = #selector(midiSettingsChanged)
+        midiModePopup.toolTip = Lang.t("Releasing the key stops the sound in both modes", "Relâcher la touche coupe le son dans les deux modes")
+        midiStatus.font = .monospacedDigitSystemFont(ofSize: 11, weight: .medium); midiStatus.textColor = .secondaryLabelColor
+        midiStatus.lineBreakMode = .byTruncatingTail
+        midiStatus.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        let midiRow = hstack([icon("pianokeys"), midiToggle, label(Lang.t("root", "base")), rootPopup, midiModePopup, midiStatus, NSView()], 8)
+
         let sep = NSBox(); sep.boxType = .separator; sep.translatesAutoresizingMaskIntoConstraints = false
 
         // Bas : bypass, et transparence à droite (hors du flux audio)
@@ -142,7 +173,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
         dragHint.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         let actions = hstack([dragHint, NSView()], 10)
 
-        let stack = NSStackView(views: [header, waveform, transport, columns, sep, botRow, actions])
+        let stack = NSStackView(views: [header, waveform, transport, columns, midiRow, sep, botRow, actions])
         stack.orientation = .vertical; stack.alignment = .leading; stack.spacing = 12
         stack.translatesAutoresizingMaskIntoConstraints = false
         root.addSubview(stack)
@@ -155,6 +186,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
             waveform.widthAnchor.constraint(equalTo: stack.widthAnchor),
             transport.widthAnchor.constraint(equalTo: stack.widthAnchor),
             columns.widthAnchor.constraint(equalTo: stack.widthAnchor),
+            midiRow.widthAnchor.constraint(equalTo: stack.widthAnchor),
             sep.widthAnchor.constraint(equalTo: stack.widthAnchor),
             botRow.widthAnchor.constraint(equalTo: stack.widthAnchor),
             actions.widthAnchor.constraint(equalTo: stack.widthAnchor),
@@ -205,6 +237,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
 
     private func load(_ url: URL) {
         analyzer.cancel(); player.stop(); midi.stop()
+        player.sampler.setArmed(false)
         waveform.maxv = []; waveform.minv = []; waveform.rms = []; waveform.notes = []
         waveform.progress = 0; waveform.loopA = 0; waveform.loopB = 1
         currentURL = url
@@ -240,6 +273,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
                 self.infoLabel.stringValue = self.describe(url, src)
                 self.analyzer.analyze(url: url) { [weak self] r in self?.waveform.maxv = r.maxv; self?.waveform.minv = r.minv; self?.waveform.rms = r.rms }
                 self.updateGrid(); self.startTimer(); self.refresh()
+                self.updateSamplerArming()
             }
         }
     }
@@ -265,6 +299,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
         titleLabel.stringValue = url.lastPathComponent
         infoLabel.stringValue = describeMidi(url, notes: midi.rawNotes.count)
         updateGrid(); startTimer(); refresh()
+        updateSamplerArming()
     }
 
     /// Mode démonstration : règle la boucle, le tempo et la transposition demandés au lancement.
@@ -289,7 +324,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
     }
 
     private func navigate(_ d: Int) { guard !siblings.isEmpty else { return }; index = (index + d + siblings.count) % siblings.count; load(siblings[index]) }
-    func suspend() { active.pause(); refresh() }
+    func suspend() { active.pause(); player.sampler.setArmed(false); refresh() }
 
     // MARK: Tempo
     private func rateFromBPM() -> Double {
@@ -363,6 +398,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupMidiInput()
         // Espace = lecture/pause tant que la fenêtre AudioLook est active
         // (on laisse passer l'espace quand on édite un champ texte).
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] e in
@@ -381,7 +417,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
     }
 
     // Arrête la lecture quand on ferme la fenêtre (bouton rouge ou Échap).
-    func windowWillClose(_ notification: Notification) { active.pause(); refresh() }
+    func windowWillClose(_ notification: Notification) { active.pause(); player.sampler.setArmed(false); refresh() }
 
     override func keyDown(with e: NSEvent) {
         switch e.keyCode {
@@ -393,6 +429,82 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
             if e.charactersIgnoringModifiers?.lowercased() == "l" { loopButton.state = loopButton.state == .on ? .off : .on; toggleLoop() }
             else { super.keyDown(with: e) }
         }
+    }
+
+    // MARK: Clavier MIDI (sampler)
+
+    /// Nom de note, convention Logic (do central = C3 = note 60).
+    static func noteName(_ n: Int) -> String {
+        let names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+        return names[n % 12] + String(n / 12 - 2)
+    }
+
+    private func setupMidiInput() {
+        player.sampler.setRoot(rootPopup.indexOfSelectedItem)
+        player.sampler.setLoopMode(midiModePopup.indexOfSelectedItem == 1)
+        // Les notes partent directement vers le sampler depuis le thread MIDI (latence minimale) ;
+        // l'interface est mise à jour ensuite sur le thread principal.
+        let sampler = player.sampler
+        midiIn.onEvent = { [weak self] e in
+            let started = sampler.handle(e)
+            DispatchQueue.main.async { self?.midiEventReceived(e, started: started) }
+        }
+        midiIn.onSourcesChanged = { [weak self] in self?.updateMidiStatus() }
+        // en démonstration (captures d'écran), l'app ne se connecte à aucun appareil
+        if midiToggle.state == .on && !DemoData.isEnabled { midiIn.start() }
+        updateMidiStatus()
+    }
+
+    @objc private func midiToggleChanged() {
+        let on = midiToggle.state == .on
+        UserDefaults.standard.set(on, forKey: midiEnabledKey)
+        if on { midiIn.start() } else { midiIn.stop() }
+        updateSamplerArming(); updateMidiStatus()
+    }
+
+    @objc private func midiSettingsChanged() {
+        let root = rootPopup.indexOfSelectedItem, loop = midiModePopup.indexOfSelectedItem == 1
+        UserDefaults.standard.set(root, forKey: midiRootKey)
+        UserDefaults.standard.set(loop, forKey: midiLoopKey)
+        player.sampler.setRoot(root)
+        player.sampler.setLoopMode(loop)
+        focusWave()
+    }
+
+    /// Le sampler ne répond que pour un fichier audio chargé, fenêtre visible, MIDI activé.
+    private func updateSamplerArming() {
+        let armed = midiToggle.state == .on && !isMidi && player.source != nil && (view.window?.isVisible ?? false)
+        player.sampler.setArmed(armed)
+        for c in [rootPopup, midiModePopup] { c.isEnabled = midiToggle.state == .on && !isMidi }
+        updateMidiStatus()
+    }
+
+    private func midiEventReceived(_ e: MidiEvent, started: Bool) {
+        guard case let .noteOn(note, _) = e else { return }
+        if !started {
+            // fenêtre fermée puis rouverte, ou moteur pas encore armé : on réarme pour la note suivante
+            updateSamplerArming()
+            return
+        }
+        player.ensureEngineRunning()
+        // une note jouée prend la main sur la lecture en boucle du transport
+        if player.isPlaying { player.pause(); refresh() }
+        midiStatus.textColor = .controlAccentColor
+        midiStatus.stringValue = "♪ " + Self.noteName(Int(note))
+        midiNoteClear?.cancel()
+        let w = DispatchWorkItem { [weak self] in self?.updateMidiStatus() }
+        midiNoteClear = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: w)
+    }
+
+    private func updateMidiStatus() {
+        midiStatus.textColor = .secondaryLabelColor
+        if midiToggle.state != .on { midiStatus.stringValue = ""; return }
+        if isMidi { midiStatus.stringValue = Lang.t("audio files only", "fichiers audio uniquement"); return }
+        let n = midiIn.sourceCount
+        midiStatus.stringValue = n == 0
+            ? Lang.t("no device · port “AudioLook”", "aucun appareil · port « AudioLook »")
+            : Lang.t("\(n) device\(n > 1 ? "s" : "") · port “AudioLook”", "\(n) appareil\(n > 1 ? "s" : "") · port « AudioLook »")
     }
 
     // MARK: Export / Logic
@@ -455,6 +567,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
 
     deinit {
         timer?.invalidate(); reprocessTimer?.invalidate(); analyzer.cancel(); player.stop(); midi.stop()
+        midiIn.stop()
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
     }
 }

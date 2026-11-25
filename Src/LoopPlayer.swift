@@ -6,6 +6,9 @@ import AVFoundation
 final class LoopPlayer: PlaybackEngine {
     private let engine = AVAudioEngine()
     private let node = AVAudioPlayerNode()
+    /// Sampler joué au clavier MIDI (même moteur audio, même volume).
+    let sampler = SamplerVoices()
+    private var zoneTimer: Timer?
 
     private(set) var source: AudioSource?
     private var processed: AVAudioPCMBuffer?
@@ -16,7 +19,10 @@ final class LoopPlayer: PlaybackEngine {
     var bypass = false            // désactive pitch/stretch (joue l'original)
     private var effRate: Float { bypass ? 1 : rate }
     private var effSemi: Float { bypass ? 0 : transpose }
-    var volume: Float { get { node.volume } set { node.volume = max(0, min(1, newValue)) } }
+    var volume: Float {
+        get { node.volume }
+        set { let v = max(0, min(1, newValue)); node.volume = v; sampler.node.volume = v }
+    }
 
     private(set) var loopEnabled = true
     private(set) var loopA: Double = 0
@@ -63,6 +69,11 @@ final class LoopPlayer: PlaybackEngine {
             engine.disconnectNodeOutput(node)
             engine.connect(node, to: engine.mainMixerNode, format: fmt)
         }
+        if sampler.node.engine == nil {
+            engine.attach(sampler.node)
+            engine.connect(sampler.node, to: engine.mainMixerNode, format: sampler.format)
+        }
+        rebuildSamplerZone()
         // sécurité : jamais muet — sauf en démonstration, où les captures se font en silence
         engine.mainMixerNode.outputVolume = DemoData.isEnabled ? 0 : 1
         engine.prepare()
@@ -86,6 +97,7 @@ final class LoopPlayer: PlaybackEngine {
             DispatchQueue.main.async {
                 guard let self, token == self.renderToken, let buf else { return }
                 self.processed = buf
+                self.rebuildSamplerZone()
                 self.pausedGlobal = g
                 if wasPlaying { self.play(fromGlobal: g) }
                 self.onReprocessed?()
@@ -99,6 +111,7 @@ final class LoopPlayer: PlaybackEngine {
         let lo = max(0, min(a, b)), hi = min(1, max(a, b))
         guard hi - lo > 0.001 else { return }
         loopA = lo; loopB = hi
+        scheduleSamplerZone()
         var g = currentGlobal
         if g < loopA || g > loopB { g = loopA }
         if isPlaying { play(fromGlobal: g) } else { pausedGlobal = g }
@@ -190,7 +203,16 @@ final class LoopPlayer: PlaybackEngine {
 
     func stop() {
         generation += 1
+        sampler.allNotesOff()
         node.stop(); engine.stop(); isPlaying = false
+    }
+
+    /// Le sampler a besoin du moteur audio démarré (macOS peut l'arrêter, ex. changement de
+    /// sortie audio). Appelé depuis le thread principal à chaque note reçue.
+    func ensureEngineRunning() {
+        guard processed != nil, !engine.isRunning else { return }
+        try? engine.start()
+        engine.mainMixerNode.outputVolume = DemoData.isEnabled ? 0 : 1
     }
 
     // MARK: Fabrication de buffers
@@ -301,6 +323,35 @@ final class LoopPlayer: PlaybackEngine {
         }
         out.frameLength = AVAudioFrameCount(loopLen)
         return out
+    }
+
+    // MARK: Sampler (clavier MIDI)
+
+    /// Reconstruit la zone du sampler peu après un changement de région A/B (pendant qu'on
+    /// fait glisser les poignées, on évite de recopier l'échantillon à chaque mouvement).
+    private func scheduleSamplerZone() {
+        zoneTimer?.invalidate()
+        let t = Timer(timeInterval: 0.12, repeats: false) { [weak self] _ in
+            DispatchQueue.main.async { self?.rebuildSamplerZone() }
+        }
+        RunLoop.main.add(t, forMode: .common)
+        zoneTimer = t
+    }
+
+    /// Région A/B de l'échantillon tel qu'on l'entend (pitch / tempo appliqués) :
+    /// version « une fois » (attaque intacte, fin fondue) et corps de boucle sans clic.
+    private func rebuildSamplerZone() {
+        zoneTimer?.invalidate(); zoneTimer = nil
+        guard let processed, processedLength > 1 else { sampler.setZones(oneShot: nil, loop: nil); return }
+        let L = processedLength
+        let aF = Int((loopA * Double(L)).rounded())
+        let bF = max(aF + 1, min(L, Int((loopB * Double(L)).rounded())))
+        let N = bF - aF
+        let one = makeSub(processed, from: aF, to: bF, fadeIn: false, fadeOut: true).flatMap { SamplerZone($0) }
+        let xf = min(xfadeFrames, N / 4)
+        var loop: SamplerZone?
+        if N > xf * 2 + 16, let body = makeLoopBody(processed, aF: aF, bF: bF, xf: xf) { loop = SamplerZone(body) }
+        sampler.setZones(oneShot: one, loop: loop ?? one)
     }
 
     // MARK: Export

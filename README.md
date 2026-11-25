@@ -28,6 +28,8 @@ Free and open-source 🙂 — if you feel like it, buy me a few tokens:
 - **Tempo (BPM)**: automatic detection + match to a target BPM (pitch unchanged).
   Source BPM is editable, or enter the number of beats.
 - **Transposition** −24…+24 semitones (tempo unchanged).
+- **MIDI keyboard**: play the A/B region as a sampler, from a MIDI keyboard or from a DAW track
+  (see below).
 - **Magnetic grid** (1/16, 1/8, 1/4, bar) derived from the BPM.
 - **Attack preserved** at the loop start (no fade over the first transient — the kick stays punchy).
 - **Volume**, adjustable window **transparency**, values editable from the keyboard.
@@ -86,6 +88,22 @@ that check proves the download is the one published on GitHub, not who built it.
 `CHANGELOG.md`, then run `./release.command` — it builds, makes the DMG and its SHA-256,
 commits the DMG, pushes and creates the GitHub release that the app looks for.
 
+## Play the sample from a MIDI keyboard
+
+Tick **MIDI keyboard** (on by default) and play: AudioLook works as a classic **sampler**. The
+**root** note (C3 by default) plays the A/B region exactly as you hear it, with the current pitch
+and tempo. Each semitone above or below plays it faster or slower, so pitch and length change
+together, like on an MPC.
+
+- **Play once**: the region plays to its end at most. **Loop A/B while held**: the region loops
+  for as long as the key is held. In both modes, **releasing the key stops the sound**.
+- Up to 16 notes at once, **velocity** sets the level, **pitch bend** ±2 semitones, and the
+  **sustain pedal** holds released notes.
+- Every connected MIDI keyboard or controller is used. AudioLook also shows up as a MIDI port
+  called **“AudioLook”**: pick it as the MIDI output of a track in Logic (or any DAW) to play the
+  sample from that track.
+- Playing a note stops the loop playback. Only audio files are played this way (not `.mid` files).
+
 ## Export to a DAW
 
 - **Drag the waveform**: just drag the waveform itself into your DAW's arrangement and drop it
@@ -126,6 +144,8 @@ Src/
   AppDelegate.swift         global shortcut, Finder-selection follow, window
   PlayerViewController.swift UI (waveform, controls, export)
   LoopPlayer.swift          A/B loop playback, fades, re-render
+  SamplerVoices.swift       polyphonic sampler played from MIDI (varispeed, A/B region)
+  MidiInput.swift           CoreMIDI input: all sources + virtual “AudioLook” port
   SampleProcessor.swift     file read + Signalsmith render + WAV export
   BPMDetector.swift         tempo detection (RMS envelope + autocorrelation)
   WaveformView.swift        waveform + A/B handles + magnetic grid

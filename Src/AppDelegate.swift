@@ -116,8 +116,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             w.titlebarAppearsTransparent = true
             w.title = "AudioLook"
             w.isMovableByWindowBackground = true        // on déplace par le fond (la forme d'onde ne bouge pas la fenêtre)
-            w.setContentSize(NSSize(width: 600, height: 470))   // taille par défaut (disposition 2 colonnes)
-            w.contentMinSize = NSSize(width: 560, height: 380)
+            w.setContentSize(NSSize(width: 600, height: 500))   // taille par défaut (disposition 2 colonnes)
+            w.contentMinSize = NSSize(width: 560, height: 410)
             w.center()
             // Mémorise taille + position d'un lancement à l'autre et restaure le dernier cadre.
             if !w.setFrameUsingName("AudioLookMain") { w.center() }

@@ -2,6 +2,16 @@
 
 All notable changes to **AudioLook**.
 
+## 1.4.0 — 2026-11-25
+- **Play the sample from a MIDI keyboard.** AudioLook works as a classic sampler: the **root
+  note** (C3 by default) plays the A/B region as you hear it, and the other notes play it higher
+  and faster or lower and slower.
+  - Two modes: **Play once** or **Loop A/B while held**. Releasing the key stops the sound.
+  - Up to 16 notes at once, velocity, pitch bend (±2 semitones) and sustain pedal.
+  - Listens to every connected MIDI device, and adds a MIDI port called **“AudioLook”** that a
+    track in Logic (or any DAW) can play.
+  - A new **MIDI keyboard** row in the window; a played note stops the loop playback.
+
 ## 1.3.0 — 2026-11-16
 - **Automatic updates** — AudioLook checks GitHub for a new release at launch and then once a
   day. When one is available it shows the release notes and offers **Install and Relaunch**,
