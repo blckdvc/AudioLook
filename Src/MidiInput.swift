@@ -86,7 +86,7 @@ final class MidiInput: @unchecked Sendable {
         }
     }
 
-    private static func decode(_ w: UInt32) -> MidiEvent? {
+    static func decode(_ w: UInt32) -> MidiEvent? {
         let status = UInt8((w >> 16) & 0xF0)
         let d1 = UInt8((w >> 8) & 0x7F)
         let d2 = UInt8(w & 0x7F)
