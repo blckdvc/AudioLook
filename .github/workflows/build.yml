@@ -2,8 +2,9 @@ name: build
 
 # À chaque push : compile l'app (comme build.sh), lance les tests du sampler MIDI et
 # démarre l'app quelques secondes en mode démo pour vérifier qu'elle ne plante pas.
-# Sur un tag de version (ex. 1.4.0) : publie en plus la release GitHub (DMG + SHA-256),
-# celle que lit la mise à jour automatique.
+# Sur main, si la version de build.sh n'a pas encore de release : publie la release GitHub
+# (DMG + SHA-256, notes du CHANGELOG), celle que lit la mise à jour automatique, et met à jour
+# le DMG du dépôt. Publier une version = changer la version dans build.sh + CHANGELOG, pousser.
 on:
   push:
     branches: ['**']
@@ -52,16 +53,18 @@ jobs:
             AudioLook.dmg.sha256
 
       - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="${GITHUB_REF_NAME}"
-          PLIST=$(grep -m1 'CFBundleShortVersionString' build.sh | sed -E 's/.*<string>([^<]+)<\/string>.*/\1/')
-          [ "$VERSION" = "$PLIST" ] || { echo "Le tag $VERSION ne correspond pas à la version de build.sh ($PLIST)"; exit 1; }
+          VERSION=$(grep -m1 'CFBundleShortVersionString' build.sh | sed -E 's/.*<string>([^<]+)<\/string>.*/\1/')
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "$VERSION" ]; then
+            echo "Le tag $GITHUB_REF_NAME ne correspond pas à la version de build.sh ($VERSION)"; exit 1
+          fi
+          if gh release view "$VERSION" >/dev/null 2>&1; then echo "Release $VERSION déjà publiée : rien à faire."; exit 0; fi
           NOTES=$(awk -v v="## $VERSION " 'index($0, v) == 1 {f=1; next} /^## / && f {exit} f' CHANGELOG.md)
           [ -n "$NOTES" ] || NOTES="AudioLook $VERSION"
-          gh release create "$VERSION" AudioLook.dmg AudioLook.dmg.sha256 --title "AudioLook $VERSION" --notes "$NOTES"
+          gh release create "$VERSION" --target "$GITHUB_SHA" AudioLook.dmg AudioLook.dmg.sha256 --title "AudioLook $VERSION" --notes "$NOTES"
           # le DMG du dépôt (lien du README) suit la release
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

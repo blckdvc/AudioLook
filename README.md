@@ -85,8 +85,10 @@ must be AudioLook, newer, with an intact signature. The app is ad hoc signed, no
 that check proves the download is the one published on GitHub, not who built it.
 
 **Publishing a release** (maintainer): bump the version in `build.sh`, add a section to
-`CHANGELOG.md`, then run `./release.command` — it builds, makes the DMG and its SHA-256,
-commits the DMG, pushes and creates the GitHub release that the app looks for.
+`CHANGELOG.md` and push to `main`. GitHub Actions (`.github/workflows/build.yml`) builds the app
+on macOS, runs the sampler/MIDI tests and a launch check, then creates the GitHub release (DMG +
+SHA-256) that the app looks for and updates the DMG in the repository. `./release.command` does
+the same from your Mac.
 
 ## Play the sample from a MIDI keyboard
 
