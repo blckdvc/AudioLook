@@ -75,7 +75,7 @@ sampler.handle(.noteOn(72, 127))
 a = render(0.4)
 check(near(freq(a), 880), "C4 → 880 Hz (mesuré \(Int(freq(a))) Hz)")
 a = render(0.3)
-check(rms(a[a.count / 2...]) < 1e-4, "mode « une fois » : s'arrête à la fin de la région (0,5 s à l'octave)")
+check(rms(a[(a.count / 2)...]) < 1e-4, "mode « une fois » : s'arrête à la fin de la région (0,5 s à l'octave)")
 sampler.handle(.noteOff(72))
 
 // --- une quinte en dessous
