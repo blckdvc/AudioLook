@@ -7,8 +7,7 @@ Made to audition and prepare samples before dragging them into a DAW.
 The interface follows the system language (English, or French on a French macOS).
 See the [changelog](CHANGELOG.md) for what's new.
 
-![AudioLook — main window](docs/screenshot-main.jpg)
-![AudioLook — A/B loop region](docs/screenshot-loop-ab.jpg)
+![AudioLook — a loop with its waveform and playhead](docs/screenshot-waveform.png)
 
 ### Support the project
 Free and open-source 🙂 — if you feel like it, buy me a few tokens:
@@ -28,8 +27,8 @@ Free and open-source 🙂 — if you feel like it, buy me a few tokens:
 - **Tempo (BPM)**: automatic detection + match to a target BPM (pitch unchanged).
   Source BPM is editable, or enter the number of beats.
 - **Transposition** −24…+24 semitones (tempo unchanged).
-- **MIDI keyboard**: play the A/B region as a sampler, from a MIDI keyboard or from a DAW track
-  (see below).
+- **MIDI keyboard**: play the A/B region as a sampler, from a MIDI keyboard or from a DAW track;
+  the playhead follows the note you play (see below).
 - **Magnetic grid** (1/16, 1/8, 1/4, bar) derived from the BPM.
 - **Attack preserved** at the loop start (no fade over the first transient — the kick stays punchy).
 - **Volume**, adjustable window **transparency**, values editable from the keyboard.
@@ -43,8 +42,6 @@ Free and open-source 🙂 — if you feel like it, buy me a few tokens:
   each sample's own detected BPM.
 
 ### In pictures
-
-![AudioLook — a loop with its waveform and playhead](docs/screenshot-waveform.png)
 
 ![AudioLook — an A/B region dragged over one bar of the loop](docs/screenshot-loop.png)
 
@@ -97,6 +94,8 @@ Tick **MIDI keyboard** (on by default) and play: AudioLook works as a classic **
 and tempo. Each semitone above or below plays it faster or slower, so pitch and length change
 together, like on an MPC.
 
+![AudioLook — a held C3 looping the A/B region, the playhead following the note](docs/screenshot-keyboard.png)
+
 - **Play once**: the region plays to its end at most. **Loop A/B while held**: the region loops
   for as long as the key is held. In both modes, **releasing the key stops the sound**.
 - Up to 16 notes at once, **velocity** sets the level, **pitch bend** ±2 semitones, and the
@@ -104,6 +103,9 @@ together, like on an MPC.
 - Every connected MIDI keyboard or controller is used. AudioLook also shows up as a MIDI port
   called **“AudioLook”**: pick it as the MIDI output of a track in Logic (or any DAW) to play the
   sample from that track.
+- The **playhead follows the note**: while a note sounds, the playhead and the time counter track
+  it through the A/B region at the speed of the note (twice as fast an octave up). With several
+  notes held it follows the last one played, then goes back to the transport position.
 - Playing a note stops the loop playback. Only audio files are played this way (not `.mid` files).
 
 ## Export to a DAW
@@ -136,7 +138,7 @@ To build the DMG: `./makedmg.command` (produces `AudioLook.dmg`).
 
 `NOINSTALL=1 ./build.sh` builds and signs the app without installing or launching it.
 
-Launched with `-demoData YES`, the app opens synthesized loops instead of following the Finder selection, and stays silent: this is how the screenshots above are made. `-demoStage midi` opens the MIDI file, `-demoStage update` shows the update window without installing anything (add `-demoAllowInstall YES` on a test copy to run the whole update unattended), `-demoLoopA 0.25 -demoLoopB 0.5` sets the A/B region, `-demoTargetBPM 140` the target tempo and `-demoTranspose 3` the transposition.
+Launched with `-demoData YES`, the app opens synthesized loops instead of following the Finder selection, and stays silent: this is how the screenshots above are made. `-demoStage midi` opens the MIDI file, `-demoStage keyboard` holds a note on the sampler as if played from a MIDI keyboard (`-demoNote 67` picks the note), `-demoStage update` shows the update window without installing anything (add `-demoAllowInstall YES` on a test copy to run the whole update unattended), `-demoLoopA 0.25 -demoLoopB 0.5` sets the A/B region, `-demoTargetBPM 140` the target tempo and `-demoTranspose 3` the transposition.
 
 ## Architecture
 

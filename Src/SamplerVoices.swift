@@ -66,6 +66,17 @@ final class SamplerVoices: @unchecked Sendable {
     }
 
     func allNotesOff() { core.withState { $0.releaseAll() } }
+
+    /// Position de lecture (en frames dans la zone) de la dernière note encore tenue,
+    /// pour faire suivre la tête de lecture à l'écran. `nil` si aucune note ne sonne.
+    var playheadFrame: Double? {
+        core.withState { s in
+            var best: SamplerVoice?
+            for v in s.voices where v.active && !v.releasing && v.age > (best?.age ?? 0) { best = v }
+            guard let v = best, let z = v.loop ? s.loopZone : s.oneShot else { return nil }
+            return min(max(0, v.pos), Double(z.length - 1))
+        }
+    }
 }
 
 // MARK: - Zone (mémoire stable lue par le thread audio)

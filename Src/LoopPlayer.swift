@@ -134,8 +134,13 @@ final class LoopPlayer: PlaybackEngine {
         let posFromA = (offsetInSub + played) % max(1, subLen)
         return Double(bufferStartFrame + posFromA) / Double(processedLength)
     }
-    var progress: Double { currentGlobal }
-    var currentTime: TimeInterval { max(0, currentGlobal - loopA) * duration }
+    /// Position affichée : tant qu'une note MIDI sonne, la tête de lecture suit cette note
+    /// (la dernière jouée) dans la région A/B ; sinon elle suit la lecture normale.
+    var progress: Double {
+        guard processedLength > 0, let f = sampler.playheadFrame else { return currentGlobal }
+        return min(loopB, loopA + f / Double(processedLength))
+    }
+    var currentTime: TimeInterval { max(0, progress - loopA) * duration }
 
     // MARK: Transport (avec fondus)
 

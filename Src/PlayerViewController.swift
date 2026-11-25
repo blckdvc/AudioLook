@@ -320,7 +320,19 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
                 self.pitchSlider.doubleValue = semis; self.pitchChanged()
             }
             self.refresh()
+            // -demoStage keyboard : une note tenue, comme jouée au clavier (après la pose de la région A/B)
+            if DemoData.wantsKeyboard && !self.isMidi {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.demoPlayNote() }
+            }
         }
+    }
+
+    /// Mode démonstration : joue et tient une note sur le sampler, sans appareil MIDI (et sans son).
+    private func demoPlayNote() {
+        updateSamplerArming()
+        let e = MidiEvent.noteOn(UInt8(max(0, min(127, DemoData.number("demoNote") ?? 60))), 100)
+        midiEventReceived(e, started: player.sampler.handle(e))
+        midiNoteClear?.cancel()          // le nom de la note reste affiché pour la capture
     }
 
     private func navigate(_ d: Int) { guard !siblings.isEmpty else { return }; index = (index + d + siblings.count) % siblings.count; load(siblings[index]) }

@@ -2,6 +2,12 @@
 
 All notable changes to **AudioLook**.
 
+## 1.4.1 — 2026-11-25
+- **The playhead follows the note you play.** While a MIDI note sounds, the playhead and the time
+  counter track that note through the A/B region, at the speed of the note (twice as fast an
+  octave up). With several notes held it follows the last one played; when the notes stop it goes
+  back to the transport position.
+
 ## 1.4.0 — 2026-11-25
 - **Play the sample from a MIDI keyboard.** AudioLook works as a classic sampler: the **root
   note** (C3 by default) plays the A/B region as you hear it, and the other notes play it higher

@@ -6,12 +6,15 @@ import Foundation
 /// pas sur lecture.
 ///   -demoStage midi          ouvre le fichier MIDI plutôt que la boucle audio
 ///   -demoStage update        montre la fenêtre de mise à jour (vérification réelle, sans installation)
+///   -demoStage keyboard      tient une note sur le sampler, comme jouée au clavier MIDI
+///                            (`-demoNote 67` choisit la note, 60 = note de base par défaut)
 ///   -demoLoopA 0.25 -demoLoopB 0.5   pose la région de boucle A/B (fractions de la durée)
 ///   -demoTargetBPM 140       règle le tempo cible
 ///   -demoTranspose 3         transpose de n demi-tons
 enum DemoData {
     static var isEnabled: Bool { UserDefaults.standard.bool(forKey: "demoData") }
     static var wantsMidi: Bool { UserDefaults.standard.string(forKey: "demoStage") == "midi" }
+    static var wantsKeyboard: Bool { UserDefaults.standard.string(forKey: "demoStage") == "keyboard" }
     /// `-demoStage update` : interroge réellement GitHub pour montrer la fenêtre de mise à jour,
     /// sans jamais rien télécharger ni installer.
     static var wantsUpdateCheck: Bool { UserDefaults.standard.string(forKey: "demoStage") == "update" }

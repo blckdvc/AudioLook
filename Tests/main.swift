@@ -70,7 +70,21 @@ sampler.handle(.noteOff(60))
 _ = render(0.03)
 check(rms(render(0.1)) < 1e-4, "relâcher la touche coupe le son")
 
+// --- tête de lecture : suit la note tenue, à la vitesse de la note
+check(sampler.playheadFrame == nil, "tête de lecture : aucune quand rien ne sonne")
+sampler.handle(.noteOn(60, 127))
+_ = render(0.25)
+var head = (sampler.playheadFrame ?? -1) / 44_100
+check(near(head, 0.25, 0.05), "tête de lecture : 0,25 s après 0,25 s à la note de base (mesuré \(head))")
+sampler.handle(.noteOff(60)); _ = render(0.05)
+check(sampler.playheadFrame == nil, "tête de lecture : disparaît au relâchement")
+
 // --- une octave au-dessus : deux fois plus aigu et deux fois plus court
+sampler.handle(.noteOn(72, 127))
+_ = render(0.2)
+head = (sampler.playheadFrame ?? -1) / 44_100
+check(near(head, 0.4, 0.05), "tête de lecture : deux fois plus vite à l'octave (mesuré \(head))")
+sampler.handle(.noteOff(72)); _ = render(0.05)
 sampler.handle(.noteOn(72, 127))
 a = render(0.4)
 check(near(freq(a), 880), "C4 → 880 Hz (mesuré \(Int(freq(a))) Hz)")
