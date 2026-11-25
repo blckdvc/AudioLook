@@ -168,6 +168,17 @@ check(ev(0x20B0_4050) == "sustain(true)", "décodage sustain")
 check(ev(0x20B0_7B00) == "allNotesOff", "décodage All Notes Off")
 check(ev(0x20B0_0740) == "nil", "CC7 ignoré")
 
+// --- note de base tapée au clavier
+check(NoteName.parse("C3") == 60, "saisie « C3 » → 60")
+check(NoteName.parse("60") == 60, "saisie « 60 » → 60")
+check(NoteName.parse(" f#2 ") == 54, "saisie « f#2 » → 54")
+check(NoteName.parse("Bb1") == 46 && NoteName.parse("bb1") == 46, "saisie « Bb1 » → 46")
+check(NoteName.parse("b3") == 71, "saisie « b3 » → 71 (si, pas bémol)")
+check(NoteName.parse("a-1") == 21 && NoteName.parse("C-2") == 0 && NoteName.parse("G8") == 127, "saisie : octaves −2 à 8")
+check(NoteName.parse("D") == 62, "saisie sans octave → octave 3")
+check(NoteName.parse("H2") == nil && NoteName.parse("") == nil && NoteName.parse("A9") == nil && NoteName.parse("128") == nil, "saisie illisible ou hors limites refusée")
+check((0...127).allSatisfy { NoteName.parse(NoteName.name($0)) == $0 }, "saisie : chaque nom affiché se relit")
+
 // --- CoreMIDI : création du client, du port et du port virtuel « AudioLook »
 let input = MidiInput()
 input.start()

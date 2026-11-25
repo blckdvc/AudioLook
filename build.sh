@@ -37,8 +37,8 @@ cat > "$APP/Contents/Info.plist" <<'PL'
   <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
   <key>CFBundleName</key><string>AudioLook</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>1.4.1</string>
-  <key>CFBundleVersion</key><string>21</string>
+  <key>CFBundleShortVersionString</key><string>1.4.2</string>
+  <key>CFBundleVersion</key><string>22</string>
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>LSApplicationCategoryType</key><string>public.app-category.music</string>
   <key>LSUIElement</key><true/>

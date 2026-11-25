@@ -114,6 +114,34 @@ final class SamplerZone: @unchecked Sendable {
     }
 }
 
+// MARK: - Noms de notes
+
+/// Noms de notes, convention Logic (do central = C3 = note 60).
+enum NoteName {
+    private static let names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
+    static func name(_ n: Int) -> String { names[n % 12] + String(n / 12 - 2) }
+
+    /// Lit une note tapée au clavier : « C3 », « f#2 », « Bb1 », « a-1 », ou un numéro MIDI « 60 ».
+    /// Sans octave (« F# »), l'octave 3. Rend `nil` si la saisie est illisible ou hors de 0…127.
+    static func parse(_ text: String) -> Int? {
+        let t = text.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: " ", with: "")
+        if let n = Int(t) { return (0...127).contains(n) ? n : nil }
+        guard let first = t.first, let base = ["C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11][String(first).uppercased()]
+        else { return nil }
+        var rest = t.dropFirst()
+        var semis = base
+        if let a = rest.first {
+            if a == "#" || a == "♯" { semis += 1; rest = rest.dropFirst() }
+            else if a == "b" || a == "B" || a == "♭" { semis -= 1; rest = rest.dropFirst() }
+        }
+        let octave: Int
+        if rest.isEmpty { octave = 3 } else if let o = Int(rest) { octave = o } else { return nil }
+        let n = (octave + 2) * 12 + semis
+        return (0...127).contains(n) ? n : nil
+    }
+}
+
 // MARK: - Évènements MIDI
 
 enum MidiEvent: Sendable {

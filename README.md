@@ -94,8 +94,10 @@ Tick **MIDI keyboard** (on by default) and play: AudioLook works as a classic **
 and tempo. Each semitone above or below plays it faster or slower, so pitch and length change
 together, like on an MPC.
 
-![AudioLook — a held C3 looping the A/B region, the playhead following the note](docs/screenshot-keyboard.png)
+![AudioLook — a held C3 looping the A/B region, the playhead following the note, and the root field](docs/screenshot-keyboard.png)
 
+- **Root note**: type it in the **root** field, as a note name (`C3`, `f#2`, `Bb1`) or a MIDI
+  number (`60`), then press Return. Or click in the field and play a key: that key becomes the root.
 - **Play once**: the region plays to its end at most. **Loop A/B while held**: the region loops
   for as long as the key is held. In both modes, **releasing the key stops the sound**.
 - Up to 16 notes at once, **velocity** sets the level, **pitch bend** ±2 semitones, and the

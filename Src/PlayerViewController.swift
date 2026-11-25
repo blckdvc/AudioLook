@@ -36,7 +36,8 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
 
     // Clavier MIDI → sampler (mode varispeed : la note de base joue l'échantillon tel quel)
     private let midiToggle = NSButton(checkboxWithTitle: Lang.t("MIDI keyboard", "Clavier MIDI"), target: nil, action: nil)
-    private let rootPopup = NSPopUpButton()
+    private let rootField = NSTextField()
+    private var rootNote = 60
     private let midiModePopup = NSPopUpButton()
     private let midiStatus = NSTextField(labelWithString: "")
     private let midiIn = MidiInput()
@@ -135,12 +136,17 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
         midiToggle.target = self; midiToggle.action = #selector(midiToggleChanged); midiToggle.font = .systemFont(ofSize: 11)
         midiToggle.toolTip = Lang.t("Play the A/B region from a MIDI keyboard, or from a DAW track sent to the “AudioLook” MIDI port",
                                     "Jouer la région A/B au clavier MIDI, ou depuis une piste de DAW envoyée vers le port MIDI « AudioLook »")
-        rootPopup.addItems(withTitles: (0...127).map { Self.noteName($0) })
-        rootPopup.selectItem(at: d.object(forKey: midiRootKey) as? Int ?? 60)
-        rootPopup.controlSize = .small; rootPopup.font = .systemFont(ofSize: 11)
-        rootPopup.target = self; rootPopup.action = #selector(midiSettingsChanged)
-        rootPopup.toolTip = Lang.t("Root note: plays the sample as you hear it (current pitch and tempo)",
-                                   "Note de base : joue l'échantillon tel que vous l'entendez (pitch et tempo actuels)")
+        // note de base : un champ où l'on tape la note (« C3 », « f#2 », « 60 »…)
+        // (en démonstration, la note de base est toujours C3 : les réglages réels ne sont ni lus ni modifiés)
+        rootNote = DemoData.isEnabled ? 60 : max(0, min(127, d.object(forKey: midiRootKey) as? Int ?? 60))
+        rootField.stringValue = Self.noteName(rootNote)
+        rootField.font = .monospacedDigitSystemFont(ofSize: 11, weight: .medium); rootField.alignment = .center
+        rootField.isEditable = true; rootField.isBordered = true; rootField.bezelStyle = .roundedBezel; rootField.focusRingType = .none
+        rootField.setContentHuggingPriority(.required, for: .horizontal)
+        rootField.widthAnchor.constraint(equalToConstant: 46).isActive = true
+        rootField.target = self; rootField.action = #selector(rootFieldEdited)
+        rootField.toolTip = Lang.t("Root note: plays the sample as you hear it (current pitch and tempo). Type a note (C3, F#2, Bb1) or a MIDI number (60), or click here and play a key.",
+                                   "Note de base : joue l'échantillon tel que vous l'entendez (pitch et tempo actuels). Tapez une note (C3, F#2, Bb1) ou un numéro MIDI (60), ou cliquez ici et jouez une touche.")
         midiModePopup.addItems(withTitles: [Lang.t("Play once", "Jouer une fois"), Lang.t("Loop A/B while held", "Boucler A/B tant que tenu")])
         midiModePopup.selectItem(at: d.bool(forKey: midiLoopKey) ? 1 : 0)
         midiModePopup.controlSize = .small; midiModePopup.font = .systemFont(ofSize: 11)
@@ -149,7 +155,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
         midiStatus.font = .monospacedDigitSystemFont(ofSize: 11, weight: .medium); midiStatus.textColor = .secondaryLabelColor
         midiStatus.lineBreakMode = .byTruncatingTail
         midiStatus.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        let midiRow = hstack([icon("pianokeys"), midiToggle, label(Lang.t("root", "base")), rootPopup, midiModePopup, midiStatus, NSView()], 8)
+        let midiRow = hstack([icon("pianokeys"), midiToggle, label(Lang.t("root", "base")), rootField, midiModePopup, midiStatus, NSView()], 8)
 
         let sep = NSBox(); sep.boxType = .separator; sep.translatesAutoresizingMaskIntoConstraints = false
 
@@ -446,13 +452,10 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
     // MARK: Clavier MIDI (sampler)
 
     /// Nom de note, convention Logic (do central = C3 = note 60).
-    static func noteName(_ n: Int) -> String {
-        let names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-        return names[n % 12] + String(n / 12 - 2)
-    }
+    static func noteName(_ n: Int) -> String { NoteName.name(n) }
 
     private func setupMidiInput() {
-        player.sampler.setRoot(rootPopup.indexOfSelectedItem)
+        player.sampler.setRoot(rootNote)
         player.sampler.setLoopMode(midiModePopup.indexOfSelectedItem == 1)
         // Les notes partent directement vers le sampler depuis le thread MIDI (latence minimale) ;
         // l'interface est mise à jour ensuite sur le thread principal.
@@ -475,24 +478,45 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
     }
 
     @objc private func midiSettingsChanged() {
-        let root = rootPopup.indexOfSelectedItem, loop = midiModePopup.indexOfSelectedItem == 1
-        UserDefaults.standard.set(root, forKey: midiRootKey)
+        let loop = midiModePopup.indexOfSelectedItem == 1
         UserDefaults.standard.set(loop, forKey: midiLoopKey)
-        player.sampler.setRoot(root)
         player.sampler.setLoopMode(loop)
         focusWave()
     }
+
+    /// Note de base tapée au clavier : nom de note (« C3 », « f#2 », « Bb1 ») ou numéro MIDI (« 60 »).
+    /// Une saisie illisible remet la note en cours.
+    @objc private func rootFieldEdited() {
+        if let n = NoteName.parse(rootField.stringValue) { setRoot(n) } else { rootField.stringValue = Self.noteName(rootNote) }
+        focusWave()
+    }
+
+    private func setRoot(_ n: Int) {
+        rootNote = max(0, min(127, n))
+        rootField.stringValue = Self.noteName(rootNote)
+        if !DemoData.isEnabled { UserDefaults.standard.set(rootNote, forKey: midiRootKey) }
+        player.sampler.setRoot(rootNote)
+    }
+
+    /// Le champ de la note de base est en cours de saisie (il a le curseur).
+    private var isEditingRoot: Bool { rootField.currentEditor() != nil }
 
     /// Le sampler ne répond que pour un fichier audio chargé, fenêtre visible, MIDI activé.
     private func updateSamplerArming() {
         let armed = midiToggle.state == .on && !isMidi && player.source != nil && (view.window?.isVisible ?? false)
         player.sampler.setArmed(armed)
-        for c in [rootPopup, midiModePopup] { c.isEnabled = midiToggle.state == .on && !isMidi }
+        for c in [rootField, midiModePopup] as [NSControl] { c.isEnabled = midiToggle.state == .on && !isMidi }
         updateMidiStatus()
     }
 
     private func midiEventReceived(_ e: MidiEvent, started: Bool) {
         guard case let .noteOn(note, _) = e else { return }
+        // curseur dans le champ « base » : la touche jouée devient la note de base
+        if isEditingRoot {
+            player.sampler.allNotesOff()
+            setRoot(Int(note)); focusWave()
+            return
+        }
         if !started {
             // fenêtre fermée puis rouverte, ou moteur pas encore armé : on réarme pour la note suivante
             updateSamplerArming()

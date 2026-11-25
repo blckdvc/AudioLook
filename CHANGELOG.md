@@ -2,6 +2,12 @@
 
 All notable changes to **AudioLook**.
 
+## 1.4.2 — 2026-11-25
+- **Type the root note.** The list of 128 notes is replaced by a small field: type a note name
+  (`C3`, `f#2`, `Bb1`) or a MIDI number (`60`) and press Return. Without an octave (`F#`), octave 3
+  is used; an entry that can't be read leaves the root unchanged.
+- With the cursor in that field, the key you play on the MIDI keyboard becomes the root note.
+
 ## 1.4.1 — 2026-11-25
 - **The playhead follows the note you play.** While a MIDI note sounds, the playhead and the time
   counter track that note through the A/B region, at the speed of the note (twice as fast an
