@@ -97,8 +97,8 @@ final class WaveformView: NSView, NSDraggingSource {
     override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
         let b = bounds
-        let bg = NSBezierPath(roundedRect: b, xRadius: 10, yRadius: 10)
-        NSColor.labelColor.withAlphaComponent(0.05).setFill(); bg.fill(); bg.addClip()
+        let bg = NSBezierPath(roundedRect: b, xRadius: 12, yRadius: 12)
+        UIStyle.waveFill.setFill(); bg.fill(); bg.addClip()
 
         let midY = b.midY, half = b.height / 2 - 8
         let xA = fx(loopA), xB = fx(loopB)
@@ -164,13 +164,23 @@ final class WaveformView: NSView, NSDraggingSource {
                 botRM[c] = midY + CGFloat(min(rm, 1)) * half
             }
 
-            func fill(_ a: Int, _ e: Int, _ top: [CGFloat], _ bot: [CGFloat], _ color: NSColor) {
+            // partie jouée dans la boucle : dégradé vertical, accent au centre, plus clair aux crêtes
+            let accentRGB = accent.usingColorSpace(.sRGB) ?? accent
+            let crest = accentRGB.blended(withFraction: 0.45, of: .white) ?? accentRGB
+            let playedGradient = NSGradient(colors: [crest, accentRGB, crest])
+            func fill(_ a: Int, _ e: Int, _ top: [CGFloat], _ bot: [CGFloat], _ color: NSColor, _ gradient: NSGradient? = nil) {
                 guard e > a else { return }
                 let p = NSBezierPath()
                 p.move(to: NSPoint(x: CGFloat(a), y: top[a]))
                 for c in a..<e { p.line(to: NSPoint(x: CGFloat(c), y: top[c])) }
                 for c in stride(from: e - 1, through: a, by: -1) { p.line(to: NSPoint(x: CGFloat(c), y: bot[c])) }
-                p.close(); color.setFill(); p.fill()
+                p.close()
+                if let gradient {
+                    // dégradé sur toute la hauteur de la vue (mêmes teintes d'une colonne à l'autre)
+                    NSGraphicsContext.saveGraphicsState(); p.addClip()
+                    gradient.draw(in: NSRect(x: CGFloat(a), y: midY - half, width: CGFloat(e - a), height: half * 2), angle: 90)
+                    NSGraphicsContext.restoreGraphicsState()
+                } else { color.setFill(); p.fill() }
             }
             func key(_ c: Int) -> Int {
                 let x = CGFloat(c)
@@ -187,7 +197,8 @@ final class WaveformView: NSView, NSDraggingSource {
                 let played = (k & 2) != 0, inLoop = (k & 1) != 0
                 let base = played ? accent : idle
                 fill(seg, drawEnd, topMM, botMM, base.withAlphaComponent(inLoop ? 0.55 : 0.32))
-                fill(seg, drawEnd, topRM, botRM, base.withAlphaComponent(inLoop ? 1.0 : 0.6))
+                fill(seg, drawEnd, topRM, botRM, base.withAlphaComponent(inLoop ? 1.0 : 0.6),
+                     played && inLoop ? playedGradient : nil)
                 seg = end
             }
         }
@@ -197,13 +208,14 @@ final class WaveformView: NSView, NSDraggingSource {
         for x in [xA, xB] where x >= -4 && x <= b.width + 4 {
             accent.setFill()
             ctx.fill(CGRect(x: x - 1, y: 0, width: 2, height: b.height))
-            NSBezierPath(roundedRect: CGRect(x: x - 4, y: 0, width: 8, height: 10), xRadius: 2, yRadius: 2).fill()
+            NSBezierPath(roundedRect: CGRect(x: x - 4, y: 0, width: 8, height: 12), xRadius: 3, yRadius: 3).fill()
+            NSBezierPath(roundedRect: CGRect(x: x - 3, y: b.height - 8, width: 6, height: 8), xRadius: 3, yRadius: 3).fill()
         }
 
         // barre de déplacement de la boucle (segment visible entre A et B)
         if cxB - cxA > 3 {
             accent.setFill()
-            NSBezierPath(roundedRect: CGRect(x: cxA, y: 0, width: cxB - cxA, height: 5), xRadius: 2, yRadius: 2).fill()
+            NSBezierPath(roundedRect: CGRect(x: cxA, y: 0, width: cxB - cxA, height: 6), xRadius: 3, yRadius: 3).fill()
             let cx = (cxA + cxB) / 2                 // petits points de « grip » au centre
             NSColor.black.withAlphaComponent(0.35).setFill()
             for k in -1...1 { ctx.fill(CGRect(x: cx + CGFloat(k) * 4 - 0.75, y: 1.5, width: 1.5, height: 2)) }
@@ -212,8 +224,12 @@ final class WaveformView: NSView, NSDraggingSource {
         // tête de lecture
         let playedX = fx(progress)
         if playedX >= 0 && playedX <= b.width {
+            // tête de lecture avec une légère ombre, lisible sur la partie jouée comme sur le fond
+            ctx.saveGState()
+            ctx.setShadow(offset: .zero, blur: 3, color: NSColor.black.withAlphaComponent(0.45).cgColor)
             NSColor.labelColor.setFill()
-            ctx.fill(CGRect(x: min(max(playedX, 0), b.width - 1.5), y: b.minY, width: 1.5, height: b.height))
+            ctx.fill(CGRect(x: min(max(playedX, 0), b.width - 2), y: b.minY, width: 2, height: b.height))
+            ctx.restoreGState()
         }
 
         // indicateur de zoom (discret, en haut à droite)
