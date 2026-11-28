@@ -20,6 +20,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Captures d'écran du README : boucles synthétisées, sans lire la sélection du Finder.
         if DemoData.isEnabled {
             followSelection = false
+            // -demoAppearance dark|light : force l'apparence (captures du mode sombre et du mode clair)
+            switch UserDefaults.standard.string(forKey: "demoAppearance") {
+            case "dark": NSApp.appearance = NSAppearance(named: .darkAqua)
+            case "light": NSApp.appearance = NSAppearance(named: .aqua)
+            default: break
+            }
             open(url: DemoData.prepare(), follow: false)
             MainActor.assumeIsolated { Updater.shared.start() }
             return
