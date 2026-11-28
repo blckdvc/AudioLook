@@ -26,7 +26,8 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
 
     // Grille
     private let gridToggle = NSSwitch()
-    private let gridPopup = NSPopUpButton()
+    private let gridSegment = NSSegmentedControl()
+    private let midiDot = NSView()                   // pastille d'état du MIDI (pied de fenêtre)
     private let beatsField = ValueField()
 
     // Opacité
@@ -83,8 +84,14 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
         loopButton.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 13, weight: .semibold)
         loopButton.wantsLayer = true; loopButton.layer?.cornerRadius = 7
         loopButton.toolTip = Lang.t("Loop (L)", "Boucle (L)")
-        fullButton.title = Lang.t("Whole loop", "Boucle entière"); fullButton.bezelStyle = .rounded; fullButton.controlSize = .small
-        fullButton.target = self; fullButton.action = #selector(resetLoop); fullButton.font = .systemFont(ofSize: 11)
+        // « Boucle entière » : pastille discrète, sans bordure (comme la maquette)
+        fullButton.title = Lang.t("Whole loop", "Boucle entière"); fullButton.isBordered = false
+        fullButton.bezelStyle = .regularSquare; fullButton.font = .systemFont(ofSize: 11, weight: .medium)
+        fullButton.contentTintColor = .labelColor
+        fullButton.target = self; fullButton.action = #selector(resetLoop)
+        fullButton.wantsLayer = true; fullButton.layer?.cornerRadius = 11
+        fullButton.heightAnchor.constraint(equalToConstant: 22).isActive = true
+        fullButton.widthAnchor.constraint(equalToConstant: fullButton.intrinsicContentSize.width + 22).isActive = true
         timeLabel.widthAnchor.constraint(equalToConstant: 112).isActive = true
 
         waveform.onSeek = { [weak self] f in self?.active.seek(toGlobal: f); self?.refresh() }
@@ -100,7 +107,6 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
         // Curseurs : ils prennent la largeur disponible de leur carte
         volSlider.minValue = 0; volSlider.maxValue = 1; volSlider.doubleValue = 1; volSlider.target = self; volSlider.action = #selector(volChanged)
         pitchSlider.minValue = -24; pitchSlider.maxValue = 24; pitchSlider.doubleValue = 0; pitchSlider.target = self; pitchSlider.action = #selector(pitchChanged)
-        pitchSlider.numberOfTickMarks = 49; pitchSlider.allowsTickMarkValuesOnly = true
         tgtSlider.minValue = 40; tgtSlider.maxValue = 220; tgtSlider.doubleValue = 120; tgtSlider.target = self; tgtSlider.action = #selector(tgtSliderChanged)
         for sl in [volSlider, pitchSlider, tgtSlider] {
             sl.controlSize = .small
@@ -127,8 +133,12 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
         // Grille
         gridToggle.target = self; gridToggle.action = #selector(gridChanged); gridToggle.controlSize = .mini
         gridToggle.setAccessibilityLabel(Lang.t("Snap", "Aimanter"))
-        gridPopup.addItems(withTitles: ["1/128", "1/64", "1/32", "1/16", "1/8", "1/4", Lang.t("Bar", "Mesure")]); gridPopup.selectItem(at: 5)
-        gridPopup.controlSize = .small; gridPopup.font = .systemFont(ofSize: 11); gridPopup.target = self; gridPopup.action = #selector(gridChanged)
+        let gridTitles = ["1/16", "1/8", "1/4", Lang.t("Bar", "Mesure")]
+        gridSegment.segmentCount = gridTitles.count
+        for (i, t) in gridTitles.enumerated() { gridSegment.setLabel(t, forSegment: i) }
+        gridSegment.trackingMode = .selectOne; gridSegment.selectedSegment = 2
+        gridSegment.segmentStyle = .automatic; gridSegment.controlSize = .small; gridSegment.font = .systemFont(ofSize: 11)
+        gridSegment.target = self; gridSegment.action = #selector(gridChanged)
 
         // Clavier MIDI → sampler : activer · note de base · mode (une fois / boucle A/B)
         let d = UserDefaults.standard
@@ -158,17 +168,21 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
         midiStatus.lineBreakMode = .byTruncatingTail
         midiStatus.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
+        // tempo cible ← tempo d'origine (détecté, modifiable)
+        let arrowLabel = unitLabel("←")
+        srcBPMField.textColor = .secondaryLabelColor
+        srcBPMField.font = .monospacedDigitSystemFont(ofSize: 11, weight: .regular)
         // Carte « son » : Tempo · Pitch · Volume (icône · libellé · curseur · valeur · ↺)
         let soundCard = CardView(rows: [
-            row([icon("metronome.fill"), rowLabel(Lang.t("Tempo", "Tempo")), tgtSlider, tgtField, resetBtn(#selector(resetTempo))]),
+            row([icon("metronome.fill"), rowLabel(Lang.t("Tempo", "Tempo")), tgtSlider, tgtField, arrowLabel, srcBPMField, resetBtn(#selector(resetTempo))]),
             row([icon("tuningfork"), rowLabel(Lang.t("Pitch", "Pitch")), pitchSlider, pitchValue, resetBtn(#selector(resetPitch))]),
             row([icon("speaker.wave.2.fill"), rowLabel(Lang.t("Volume", "Volume")), volSlider, volValue, resetBtn(#selector(resetVol))]),
         ])
         // Carte « grille et MIDI » : Aimanter · tempo d'origine et nombre de temps · clavier MIDI
         let gridCard = CardView(rows: [
-            row([icon("grid"), rowLabel(Lang.t("Snap", "Aimanter")), gridPopup, NSView(), gridToggle]),
-            row([icon("waveform"), rowLabel(Lang.t("Source", "Origine")), srcBPMField, label("BPM"), NSView(), beatsField, label(Lang.t("beats", "temps"))]),
-            row([icon("pianokeys"), rowLabel("MIDI"), rootField, midiModePopup, gridSpacer(), midiToggle]),
+            row([icon("grid"), rowLabel(Lang.t("Snap", "Aimanter"), 74), gridSegment, gridSpacer(), gridToggle]),
+            row([icon("metronome"), rowLabel(Lang.t("Length", "Durée"), 74), NSView(), beatsField, unitLabel(Lang.t("beats", "temps"))]),
+            row([icon("pianokeys"), rowLabel(Lang.t("MIDI keyboard", "Clavier MIDI"), 74), rootField, midiModePopup, gridSpacer(), midiToggle]),
         ])
         soundCard.setContentHuggingPriority(.defaultLow, for: .horizontal)
         gridCard.setContentHuggingPriority(.defaultHigh, for: .horizontal)
@@ -179,29 +193,30 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
         // Pied : état MIDI · bypass · transparence de la fenêtre
         bypassToggle.target = self; bypassToggle.action = #selector(toggleBypass); bypassToggle.controlSize = .mini
         bypassToggle.setAccessibilityLabel(Lang.t("Bypass processing", "Désactiver le traitement"))
-        let bypassLabel = label(Lang.t("Bypass (pitch / tempo)", "Sans traitement (pitch / tempo)"))
+        let bypassLabel = label(Lang.t("Bypass", "Sans traitement"))
         bypassLabel.toolTip = Lang.t("Hear the original file, without pitch or tempo changes", "Écouter le fichier d'origine, sans pitch ni tempo")
         opSlider.minValue = 0.35; opSlider.maxValue = 1; opSlider.doubleValue = 1
         opSlider.controlSize = .mini; opSlider.target = self; opSlider.action = #selector(opChanged)
         opSlider.setContentHuggingPriority(.required, for: .horizontal)
-        opSlider.widthAnchor.constraint(equalToConstant: 70).isActive = true
+        opSlider.widthAnchor.constraint(equalToConstant: 56).isActive = true
         opValue.font = .monospacedDigitSystemFont(ofSize: 11, weight: .medium); opValue.textColor = .secondaryLabelColor
         opValue.setContentHuggingPriority(.required, for: .horizontal)
         opValue.widthAnchor.constraint(equalToConstant: 38).isActive = true
         let opIcon = icon("circle.lefthalf.filled"); opIcon.toolTip = Lang.t("Window transparency", "Transparence de la fenêtre")
-        let footer = hstack([icon("pianokeys"), midiStatus, NSView(), bypassToggle, bypassLabel, spacer(10), opIcon, opSlider, opValue], 6)
+        midiDot.wantsLayer = true; midiDot.layer?.cornerRadius = 3
+        midiDot.widthAnchor.constraint(equalToConstant: 6).isActive = true
+        midiDot.heightAnchor.constraint(equalToConstant: 6).isActive = true
+        let dragIcon = icon("square.and.arrow.up")
+        let dragShort = label(Lang.t("Drag the waveform to a DAW", "Glissez l'onde vers un DAW"))
+        for v in [dragIcon, dragShort] as [NSView] {
+            v.toolTip = Lang.t("Drag the waveform to a DAW / Finder · click to seek · scroll to zoom (⇧ to pan)",
+                               "Glissez la forme d'onde vers un DAW / Finder · clic pour vous positionner · molette : zoom (⇧ : défiler)")
+        }
+        let footer = hstack([midiDot, midiStatus, NSView(), bypassToggle, bypassLabel, spacer(8), opIcon, opSlider, opValue, spacer(8), dragIcon, dragShort], 6)
 
-        // Export : on glisse directement la forme d'onde (traitements pitch/tempo inclus,
-        // et seulement la région A/B si la boucle n'est pas entière).
-        let dragHint = NSTextField(labelWithString: Lang.t("↥ Drag the waveform to a DAW / Finder  ·  click to seek  ·  scroll to zoom (⇧ to pan)",
-                                                           "↥ Glissez la forme d'onde vers un DAW / Finder  ·  clic pour vous positionner  ·  molette : zoom (⇧ : défiler)"))
-        dragHint.font = .systemFont(ofSize: 10.5); dragHint.textColor = .tertiaryLabelColor
-        dragHint.lineBreakMode = .byTruncatingTail
-        dragHint.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-
-        let stack = NSStackView(views: [waveform, cards, footer, dragHint])
+        let stack = NSStackView(views: [waveform, cards, footer])
         stack.orientation = .vertical; stack.alignment = .leading; stack.spacing = 12
-        stack.setCustomSpacing(14, after: waveform); stack.setCustomSpacing(6, after: footer)
+        stack.setCustomSpacing(14, after: waveform)
         stack.translatesAutoresizingMaskIntoConstraints = false
         root.addSubview(stack)
         waveform.translatesAutoresizingMaskIntoConstraints = false
@@ -214,7 +229,6 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
             waveform.widthAnchor.constraint(equalTo: stack.widthAnchor),
             cards.widthAnchor.constraint(equalTo: stack.widthAnchor),
             footer.widthAnchor.constraint(equalTo: stack.widthAnchor),
-            dragHint.widthAnchor.constraint(lessThanOrEqualTo: stack.widthAnchor),
             waveform.heightAnchor.constraint(greaterThanOrEqualToConstant: 150),
         ])
         waveform.setContentHuggingPriority(.defaultLow, for: .vertical)
@@ -231,9 +245,14 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
         let l = NSTextField(labelWithString: s); l.font = .systemFont(ofSize: 11); l.textColor = .secondaryLabelColor; return l
     }
     /// Libellé d'une rangée de carte (largeur fixe : les contrôles s'alignent d'une rangée à l'autre).
-    private func rowLabel(_ s: String) -> NSTextField {
-        let l = NSTextField(labelWithString: s); l.font = .systemFont(ofSize: 12); l.textColor = .labelColor
-        l.widthAnchor.constraint(equalToConstant: 58).isActive = true; return l
+    private func rowLabel(_ s: String, _ w: CGFloat = 58) -> NSTextField {
+        let l = NSTextField(labelWithString: s); l.font = .systemFont(ofSize: 12); l.textColor = .secondaryLabelColor
+        l.lineBreakMode = .byTruncatingTail
+        l.widthAnchor.constraint(equalToConstant: w).isActive = true; return l
+    }
+    /// Petite unité grise à côté d'une valeur (« temps », « BPM »).
+    private func unitLabel(_ s: String) -> NSTextField {
+        let l = NSTextField(labelWithString: s); l.font = .systemFont(ofSize: 11); l.textColor = .tertiaryLabelColor; return l
     }
     private func row(_ v: [NSView]) -> NSStackView {
         let s = hstack(v, 8); s.alignment = .centerY; return s
@@ -268,6 +287,8 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
     private func styleTransport() {
         view.effectiveAppearance.performAsCurrentDrawingAppearance {
             playButton.layer?.backgroundColor = NSColor.controlAccentColor.cgColor
+            fullButton.layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(0.1).cgColor
+            midiDot.layer?.backgroundColor = (midiToggle.state == .on ? NSColor.systemGreen : NSColor.tertiaryLabelColor).cgColor
             loopButton.layer?.backgroundColor = active.loopEnabled ? NSColor.labelColor.withAlphaComponent(0.1).cgColor : NSColor.clear.cgColor
         }
     }
@@ -418,7 +439,8 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
     // MARK: Grille
     @objc private func gridChanged() { updateGrid() }
     private func updateGrid() {
-        let i = max(0, min(gridPopup.indexOfSelectedItem, gridDivs.count - 1))
+        // segments 1/16 · 1/8 · 1/4 · mesure = les 4 dernières divisions de gridDivs
+        let i = max(0, min(gridSegment.selectedSegment + 3, gridDivs.count - 1))
         let beatSec = sourceBPM > 1 ? 60.0 / sourceBPM : 0
         waveform.gridSpacing = sourceDuration > 0 ? (beatSec * gridDivs[i]) / sourceDuration : 0
         waveform.gridEnabled = gridToggle.state == .on
@@ -437,7 +459,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
     }
 
     @objc private func volChanged() { active.volume = Float(volSlider.doubleValue); updateValues() }
-    @objc private func pitchChanged() { active.setTranspose(Float(pitchSlider.doubleValue.rounded())); updateValues(); scheduleReprocess() }
+    @objc private func pitchChanged() { pitchSlider.doubleValue = pitchSlider.doubleValue.rounded(); active.setTranspose(Float(pitchSlider.doubleValue.rounded())); updateValues(); scheduleReprocess() }
     @objc private func resetVol() { volSlider.doubleValue = 1; volChanged() }
     @objc private func resetPitch() { pitchSlider.doubleValue = 0; pitchChanged() }
 
@@ -578,6 +600,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
     }
 
     private func updateMidiStatus() {
+        styleTransport()
         midiStatus.textColor = .secondaryLabelColor
         if midiToggle.state != .on { midiStatus.stringValue = ""; return }
         if isMidi { midiStatus.stringValue = Lang.t("audio files only", "fichiers audio uniquement"); return }

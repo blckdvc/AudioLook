@@ -126,8 +126,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             w.toolbar = c.makeToolbar()
             w.toolbarStyle = .unified
             w.titlebarSeparatorStyle = .none
-            w.setContentSize(NSSize(width: 680, height: 520))   // taille par défaut (deux cartes côte à côte)
-            w.contentMinSize = NSSize(width: 640, height: 430)
+            w.setContentSize(NSSize(width: 720, height: 520))   // taille par défaut (deux cartes côte à côte)
+            w.contentMinSize = NSSize(width: 700, height: 430)
             w.center()
             // Mémorise taille + position d'un lancement à l'autre et restaure le dernier cadre.
             if !w.setFrameUsingName("AudioLookMain") { w.center() }
@@ -141,8 +141,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if !visible { w.center() }
             // un cadre mémorisé par une version précédente (fenêtre plus étroite) est agrandi
             let cs = w.contentRect(forFrameRect: w.frame).size
-            if cs.width < 640 || cs.height < 430 {
-                w.setContentSize(NSSize(width: max(cs.width, 680), height: max(cs.height, 520)))
+            if cs.width < 700 || cs.height < 430 {
+                w.setContentSize(NSSize(width: max(cs.width, 720), height: max(cs.height, 520)))
             }
             w.level = .floating
             w.delegate = c                              // arrête la lecture à la fermeture (windowWillClose)

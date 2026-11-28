@@ -62,20 +62,32 @@ final class ValueField: NSTextField {
     private func setup() {
         isEditable = true; isSelectable = true
         isBordered = false; isBezeled = false; focusRingType = .none
-        drawsBackground = true; backgroundColor = UIStyle.fieldFill
+        // pas de cadre ni de fond : la valeur se lit comme un texte, et devient éditable au clic
+        // (une pastille discrète apparaît seulement pendant la saisie)
+        drawsBackground = false; backgroundColor = UIStyle.fieldFill
         wantsLayer = true; layer?.cornerRadius = 5; layer?.masksToBounds = true
         heightAnchor.constraint(equalToConstant: 20).isActive = true
         (cell as? NSTextFieldCell)?.usesSingleLineMode = true
         cell?.isScrollable = true
     }
     override func viewDidChangeEffectiveAppearance() { super.viewDidChangeEffectiveAppearance(); needsDisplay = true }
+    override func becomeFirstResponder() -> Bool {
+        let ok = super.becomeFirstResponder()
+        if ok { drawsBackground = true }
+        return ok
+    }
+    override func textDidEndEditing(_ notification: Notification) {
+        super.textDidEndEditing(notification); drawsBackground = false
+    }
+    // curseur texte au survol : on comprend que la valeur se modifie au clavier
+    override func resetCursorRects() { addCursorRect(bounds, cursor: .iBeam) }
 }
 
 /// Cellule qui centre le texte verticalement (et le décolle un peu des bords de la pastille).
 final class CenteredTextFieldCell: NSTextFieldCell {
     override func titleRect(forBounds rect: NSRect) -> NSRect {
         let h = min(rect.height, cellSize(forBounds: rect).height)
-        return NSRect(x: rect.minX + 4, y: rect.minY + (rect.height - h) / 2, width: max(rect.width - 8, 0), height: h)
+        return NSRect(x: rect.minX + 2, y: rect.minY + (rect.height - h) / 2, width: max(rect.width - 4, 0), height: h)
     }
     override func drawInterior(withFrame cellFrame: NSRect, in controlView: NSView) {
         super.drawInterior(withFrame: titleRect(forBounds: cellFrame), in: controlView)
