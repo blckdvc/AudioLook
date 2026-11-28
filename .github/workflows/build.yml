@@ -44,6 +44,10 @@ jobs:
         run: |
           APP="${TMPDIR:-/tmp}/AudioLook-build/AudioLook.app"
           mkdir -p "$RUNNER_TEMP/shots"
+          # fond d'écran coloré pour voir la transparence de la fenêtre (le bureau du runner est noir)
+          WALL=$(ls /System/Library/Desktop\ Pictures/*.heic 2>/dev/null | head -1)
+          [ -n "$WALL" ] && osascript -e "tell application \"System Events\" to tell every desktop to set picture to \"$WALL\"" || true
+          sleep 2
           for mode in light dark; do
             "$APP/Contents/MacOS/AudioLook" -demoAppearance "$mode" -demoData YES -demoLoopA 0.25 -demoLoopB 0.5 -demoTargetBPM 140 -demoTranspose 3 > /dev/null 2>&1 &
             PID=$!

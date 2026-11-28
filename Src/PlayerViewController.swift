@@ -64,8 +64,7 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
 
     override func loadView() {
         // Fond translucide (matériau système) : la fenêtre prend la couleur du bureau, en clair comme en sombre.
-        let root = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: 680, height: 520))
-        root.material = .sidebar; root.blendingMode = .behindWindow; root.state = .active
+        let root = GlassView(frame: NSRect(x: 0, y: 0, width: 720, height: 520))
         titleLabel.font = .systemFont(ofSize: 13, weight: .semibold); titleLabel.lineBreakMode = .byTruncatingMiddle
         titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         infoLabel.font = .monospacedDigitSystemFont(ofSize: 11, weight: .regular); infoLabel.textColor = .secondaryLabelColor

@@ -7,7 +7,7 @@ enum UIStyle {
     }
     /// Fond des cartes de réglages et de la forme d'onde.
     static let cardFill = dynamic(light: NSColor.black.withAlphaComponent(0.035), dark: NSColor.white.withAlphaComponent(0.06))
-    static let cardBorder = dynamic(light: NSColor.black.withAlphaComponent(0.07), dark: NSColor.white.withAlphaComponent(0.08))
+    static let cardBorder = dynamic(light: NSColor.black.withAlphaComponent(0.05), dark: NSColor.white.withAlphaComponent(0.07))
     static let waveFill = dynamic(light: NSColor.black.withAlphaComponent(0.05), dark: NSColor.black.withAlphaComponent(0.26))
     /// Voile sur la forme d'onde hors de la région A/B (plus léger en mode clair).
     static let outsideLoop = dynamic(light: NSColor.black.withAlphaComponent(0.10), dark: NSColor.black.withAlphaComponent(0.28))
@@ -97,5 +97,20 @@ final class CenteredTextFieldCell: NSTextFieldCell {
     }
     override func select(withFrame rect: NSRect, in controlView: NSView, editor textObj: NSText, delegate: Any?, start selStart: Int, length selLength: Int) {
         super.select(withFrame: titleRect(forBounds: rect), in: controlView, editor: textObj, delegate: delegate, start: selStart, length: selLength)
+    }
+}
+
+/// Fond de fenêtre translucide : le bureau transparaît derrière (matériau le plus léger de chaque mode).
+final class GlassView: NSVisualEffectView {
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        blendingMode = .behindWindow; state = .active
+        applyMaterial()
+    }
+    required init?(coder: NSCoder) { super.init(coder: coder); applyMaterial() }
+    override func viewDidChangeEffectiveAppearance() { super.viewDidChangeEffectiveAppearance(); applyMaterial() }
+    private func applyMaterial() {
+        let dark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        material = dark ? .hudWindow : .popover
     }
 }
