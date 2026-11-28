@@ -20,6 +20,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Captures d'écran du README : boucles synthétisées, sans lire la sélection du Finder.
         if DemoData.isEnabled {
             followSelection = false
+            // -demoAppearance dark|light : force l'apparence (captures du mode sombre et du mode clair)
+            switch UserDefaults.standard.string(forKey: "demoAppearance") {
+            case "dark": NSApp.appearance = NSAppearance(named: .darkAqua)
+            case "light": NSApp.appearance = NSAppearance(named: .aqua)
+            default: break
+            }
             open(url: DemoData.prepare(), follow: false)
             MainActor.assumeIsolated { Updater.shared.start() }
             return
@@ -116,8 +122,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             w.titlebarAppearsTransparent = true
             w.title = "AudioLook"
             w.isMovableByWindowBackground = true        // on déplace par le fond (la forme d'onde ne bouge pas la fenêtre)
-            w.setContentSize(NSSize(width: 600, height: 500))   // taille par défaut (disposition 2 colonnes)
-            w.contentMinSize = NSSize(width: 560, height: 410)
+            // barre d'outils unifiée : titre du fichier et transport, alignés sur les boutons de la fenêtre
+            w.toolbar = c.makeToolbar()
+            w.toolbarStyle = .unified
+            w.titlebarSeparatorStyle = .none
+            w.setContentSize(NSSize(width: 720, height: 520))   // taille par défaut (deux cartes côte à côte)
+            w.contentMinSize = NSSize(width: 700, height: 430)
             w.center()
             // Mémorise taille + position d'un lancement à l'autre et restaure le dernier cadre.
             if !w.setFrameUsingName("AudioLookMain") { w.center() }
@@ -129,6 +139,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return i.width > 120 && i.height > 120
             }
             if !visible { w.center() }
+            // un cadre mémorisé par une version précédente (fenêtre plus étroite) est agrandi
+            let cs = w.contentRect(forFrameRect: w.frame).size
+            if cs.width < 700 || cs.height < 430 {
+                w.setContentSize(NSSize(width: max(cs.width, 720), height: max(cs.height, 520)))
+            }
             w.level = .floating
             w.delegate = c                              // arrête la lecture à la fermeture (windowWillClose)
             let wc = NSWindowController(window: w)

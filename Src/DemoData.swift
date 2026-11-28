@@ -11,6 +11,7 @@ import Foundation
 ///   -demoLoopA 0.25 -demoLoopB 0.5   pose la région de boucle A/B (fractions de la durée)
 ///   -demoTargetBPM 140       règle le tempo cible
 ///   -demoTranspose 3         transpose de n demi-tons
+///   -demoAppearance dark     force le mode sombre (ou light pour le mode clair)
 enum DemoData {
     static var isEnabled: Bool { UserDefaults.standard.bool(forKey: "demoData") }
     static var wantsMidi: Bool { UserDefaults.standard.string(forKey: "demoStage") == "midi" }

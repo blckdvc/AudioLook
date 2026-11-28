@@ -39,6 +39,38 @@ jobs:
           if kill -0 "$PID" 2>/dev/null; then echo "✓ AudioLook tourne toujours après 10 s"; kill "$PID"
           else echo "✗ AudioLook s'est arrêté"; cat "$RUNNER_TEMP/app.log"; exit 1; fi
 
+      - name: Window screenshots (demo mode, light and dark)
+        continue-on-error: true
+        run: |
+          APP="${TMPDIR:-/tmp}/AudioLook-build/AudioLook.app"
+          mkdir -p "$RUNNER_TEMP/shots"
+          # fond d'écran coloré pour voir la transparence de la fenêtre (le bureau du runner est noir)
+          WALL=$(ls /System/Library/Desktop\ Pictures/*.heic 2>/dev/null | head -1)
+          [ -n "$WALL" ] && osascript -e "tell application \"System Events\" to tell every desktop to set picture to \"$WALL\"" || true
+          sleep 2
+          for mode in light dark; do
+            "$APP/Contents/MacOS/AudioLook" -demoAppearance "$mode" -demoData YES -demoLoopA 0.25 -demoLoopB 0.5 -demoTargetBPM 140 -demoTranspose 3 > /dev/null 2>&1 &
+            PID=$!
+            sleep 8
+            screencapture -x "$RUNNER_TEMP/shots/screen-$mode.png" || true
+            kill "$PID" 2>/dev/null || true
+            sleep 1
+          done
+          ls -la "$RUNNER_TEMP/shots"
+          # aperçu compact dans le journal (fenêtre recadrée, JPEG), lisible sans télécharger l'artefact
+          for mode in light dark; do
+            f="$RUNNER_TEMP/shots/screen-$mode.png"; [ -f "$f" ] || continue
+            sips -g pixelWidth -g pixelHeight "$f" | tail -2
+            sips --cropToHeightWidth 780 860 "$f" --out "$RUNNER_TEMP/crop-$mode.png" >/dev/null
+            echo "BEGIN-PREVIEW-$mode"; base64 -b 0 -i "$RUNNER_TEMP/crop-$mode.png"; echo; echo "END-PREVIEW-$mode"
+          done
+
+      - uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: screenshots-${{ github.sha }}
+          path: ${{ runner.temp }}/shots
+
       - name: Disk image
         run: |
           APP="${TMPDIR:-/tmp}/AudioLook-build/AudioLook.app" ./makedmg.command
