@@ -62,8 +62,7 @@ jobs:
             f="$RUNNER_TEMP/shots/screen-$mode.png"; [ -f "$f" ] || continue
             sips -g pixelWidth -g pixelHeight "$f" | tail -2
             sips --cropToHeightWidth 780 860 "$f" --out "$RUNNER_TEMP/crop-$mode.png" >/dev/null
-            sips -s format jpeg -s formatOptions 55 "$RUNNER_TEMP/crop-$mode.png" --out "$RUNNER_TEMP/crop-$mode.jpg" >/dev/null
-            echo "BEGIN-PREVIEW-$mode"; base64 -b 0 -i "$RUNNER_TEMP/crop-$mode.jpg"; echo; echo "END-PREVIEW-$mode"
+            echo "BEGIN-PREVIEW-$mode"; base64 -b 0 -i "$RUNNER_TEMP/crop-$mode.png"; echo; echo "END-PREVIEW-$mode"
           done
 
       - uses: actions/upload-artifact@v4
