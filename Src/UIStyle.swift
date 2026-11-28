@@ -9,6 +9,8 @@ enum UIStyle {
     static let cardFill = dynamic(light: NSColor.black.withAlphaComponent(0.035), dark: NSColor.white.withAlphaComponent(0.06))
     static let cardBorder = dynamic(light: NSColor.black.withAlphaComponent(0.07), dark: NSColor.white.withAlphaComponent(0.08))
     static let waveFill = dynamic(light: NSColor.black.withAlphaComponent(0.05), dark: NSColor.black.withAlphaComponent(0.26))
+    /// Voile sur la forme d'onde hors de la région A/B (plus léger en mode clair).
+    static let outsideLoop = dynamic(light: NSColor.black.withAlphaComponent(0.10), dark: NSColor.black.withAlphaComponent(0.28))
     /// Fond des champs de valeur (BPM, %, demi-tons, note).
     static let fieldFill = dynamic(light: NSColor.black.withAlphaComponent(0.06), dark: NSColor.black.withAlphaComponent(0.25))
 }
@@ -54,6 +56,7 @@ final class CardView: NSView {
 
 /// Champ de valeur éditable au clavier : texte en gras sur une petite pastille, sans bordure.
 final class ValueField: NSTextField {
+    override class var cellClass: AnyClass? { get { CenteredTextFieldCell.self } set {} }
     override init(frame: NSRect) { super.init(frame: frame); setup() }
     required init?(coder: NSCoder) { super.init(coder: coder); setup() }
     private func setup() {
@@ -66,4 +69,21 @@ final class ValueField: NSTextField {
         cell?.isScrollable = true
     }
     override func viewDidChangeEffectiveAppearance() { super.viewDidChangeEffectiveAppearance(); needsDisplay = true }
+}
+
+/// Cellule qui centre le texte verticalement (et le décolle un peu des bords de la pastille).
+final class CenteredTextFieldCell: NSTextFieldCell {
+    override func titleRect(forBounds rect: NSRect) -> NSRect {
+        let h = min(rect.height, cellSize(forBounds: rect).height)
+        return NSRect(x: rect.minX + 4, y: rect.minY + (rect.height - h) / 2, width: max(rect.width - 8, 0), height: h)
+    }
+    override func drawInterior(withFrame cellFrame: NSRect, in controlView: NSView) {
+        super.drawInterior(withFrame: titleRect(forBounds: cellFrame), in: controlView)
+    }
+    override func edit(withFrame rect: NSRect, in controlView: NSView, editor textObj: NSText, delegate: Any?, event: NSEvent?) {
+        super.edit(withFrame: titleRect(forBounds: rect), in: controlView, editor: textObj, delegate: delegate, event: event)
+    }
+    override func select(withFrame rect: NSRect, in controlView: NSView, editor textObj: NSText, delegate: Any?, start selStart: Int, length selLength: Int) {
+        super.select(withFrame: titleRect(forBounds: rect), in: controlView, editor: textObj, delegate: delegate, start: selStart, length: selLength)
+    }
 }

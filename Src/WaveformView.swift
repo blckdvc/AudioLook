@@ -105,7 +105,7 @@ final class WaveformView: NSView, NSDraggingSource {
         let cxA = min(max(xA, 0), b.width), cxB = min(max(xB, 0), b.width)
 
         // zones hors boucle assombries (bornées à la fenêtre visible)
-        NSColor.black.withAlphaComponent(0.28).setFill()
+        UIStyle.outsideLoop.setFill()
         if cxA > 0 { ctx.fill(CGRect(x: 0, y: 0, width: cxA, height: b.height)) }
         if cxB < b.width { ctx.fill(CGRect(x: cxB, y: 0, width: b.width - cxB, height: b.height)) }
 
