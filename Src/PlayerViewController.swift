@@ -179,9 +179,9 @@ final class PlayerViewController: NSViewController, NSWindowDelegate {
         ])
         // Carte « grille et MIDI » : Aimanter · tempo d'origine et nombre de temps · clavier MIDI
         let gridCard = CardView(rows: [
-            row([icon("grid"), rowLabel(Lang.t("Snap", "Aimanter"), 74), gridSegment, gridSpacer(), gridToggle]),
-            row([icon("metronome"), rowLabel(Lang.t("Length", "Durée"), 74), NSView(), beatsField, unitLabel(Lang.t("beats", "temps"))]),
-            row([icon("pianokeys"), rowLabel(Lang.t("MIDI keyboard", "Clavier MIDI"), 74), rootField, midiModePopup, gridSpacer(), midiToggle]),
+            row([icon("grid"), rowLabel(Lang.t("Snap", "Aimanter"), 86), gridSegment, gridSpacer(), gridToggle]),
+            row([icon("metronome"), rowLabel(Lang.t("Length", "Durée"), 86), NSView(), beatsField, unitLabel(Lang.t("beats", "temps"))]),
+            row([icon("pianokeys"), rowLabel(Lang.t("MIDI keyboard", "Clavier MIDI"), 86), rootField, midiModePopup, gridSpacer(), midiToggle]),
         ])
         soundCard.setContentHuggingPriority(.defaultLow, for: .horizontal)
         gridCard.setContentHuggingPriority(.defaultHigh, for: .horizontal)
